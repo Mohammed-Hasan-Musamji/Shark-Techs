@@ -587,8 +587,6 @@ class JarvisAppController {
         const modelsByProvider = {
             groq: [
                 { id: 'openai/gpt-oss-120b', name: 'OpenAI GPT-OSS 120B (Groq Default - Ultra Fast)' },
-                { id: 'llama-3.3-70b-versatile', name: 'LLaMA 3.3 70B Versatile (High Reasoning)' },
-                { id: 'llama-3.1-8b-instant', name: 'LLaMA 3.1 8B Instant (Ultra-Fast <100ms Speed)' },
                 { id: 'mixtral-8x7b-32768', name: 'Mixtral 8x7B (32k Long Context)' },
                 { id: 'gemma2-9b-it', name: 'Google Gemma 2 9B' }
             ],
@@ -613,9 +611,15 @@ class JarvisAppController {
             modelSelect.appendChild(opt);
         });
 
-        const activeModel = selectedModel || localStorage.getItem('jarvis_model');
+        let activeModel = selectedModel || localStorage.getItem('jarvis_model');
+        if (!activeModel || activeModel.toLowerCase().includes('llama')) {
+            activeModel = 'openai/gpt-oss-120b';
+            localStorage.setItem('jarvis_model', activeModel);
+        }
         if (activeModel && Array.from(modelSelect.options).some(o => o.value === activeModel)) {
             modelSelect.value = activeModel;
+        } else if (modelSelect.options.length > 0) {
+            modelSelect.selectedIndex = 0;
         }
 
         // Update hints & placeholders
@@ -663,7 +667,11 @@ class JarvisAppController {
         const customModelInput = document.getElementById('customModelInput');
         if (customModelInput) customModelInput.value = customModel;
 
-        const savedModel = localStorage.getItem('jarvis_model') || (window.__ENV__?.DEFAULT_MODEL || 'openai/gpt-oss-120b');
+        let savedModel = localStorage.getItem('jarvis_model') || '';
+        if (!savedModel || savedModel.toLowerCase().includes('llama')) {
+            savedModel = window.__ENV__?.DEFAULT_MODEL || 'openai/gpt-oss-120b';
+            localStorage.setItem('jarvis_model', savedModel);
+        }
         this.updateModelOptions(savedModel);
 
         if (window.jarvisAgent) {

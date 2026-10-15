@@ -10,7 +10,13 @@ class JarvisAIAgent {
         this.userName = localStorage.getItem('jarvis_username') || 'Sir';
         this.apiKey = localStorage.getItem('jarvis_api_key') || '';
         this.provider = localStorage.getItem('jarvis_provider') || 'groq';
-        this.model = localStorage.getItem('jarvis_model') || 'openai/gpt-oss-120b';
+        
+        let storedModel = localStorage.getItem('jarvis_model') || '';
+        if (!storedModel || storedModel.toLowerCase().includes('llama')) {
+            storedModel = 'openai/gpt-oss-120b';
+            localStorage.setItem('jarvis_model', storedModel);
+        }
+        this.model = storedModel;
         this.customModel = localStorage.getItem('jarvis_custom_model') || '';
 
         // Multi-Turn Conversation Memory Buffer (last 12 turns)
@@ -111,7 +117,11 @@ class JarvisAIAgent {
     getActiveModel() {
         if (this.customModel) return this.customModel;
         if (this.provider === 'groq') {
-            return this.model || 'openai/gpt-oss-120b';
+            if (!this.model || this.model.toLowerCase().includes('llama')) {
+                this.model = 'openai/gpt-oss-120b';
+                localStorage.setItem('jarvis_model', this.model);
+            }
+            return this.model;
         } else if (this.provider === 'openai') {
             return this.model || 'gpt-4o-mini';
         } else if (this.provider === 'gemini') {
@@ -137,7 +147,7 @@ class JarvisAIAgent {
         if (this.provider === 'groq') {
             pill.classList.add('active-groq');
             const rawModel = this.getActiveModel();
-            const modelName = rawModel.replace('openai/', '').replace('llama-', 'L-').replace('-versatile', '').toUpperCase();
+            const modelName = rawModel.replace('openai/', '').toUpperCase();
             label.textContent = `GROQ: ${modelName}`;
             pill.title = `Active Core: Groq LPU (${this.getActiveModel()})`;
         } else if (this.provider === 'openai') {
