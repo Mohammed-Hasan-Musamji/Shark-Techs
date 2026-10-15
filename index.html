@@ -3,9 +3,403 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title>J.A.R.V.I.S. — Personal AI Agent & Stark HUD</title>
+    <meta name="description" content="Next-Generation Personal AI Agent with Interactive Arc Reactor Visualizer, Real-Time Speech Recognition, Voice Synthesis, and Stark Industries HUD.">
+    <!-- Google Fonts for Authentic Sci-Fi Stark HUD -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=Rajdhani:wght@400;500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
 </head>
-<body>
-    
+<body class="theme-cyan scanlines-active">
+    <!-- Ambient Background Grid & Glow Overlay -->
+    <div class="hud-background">
+        <div class="grid-overlay"></div>
+        <div class="radial-glow"></div>
+        <div class="scanlines"></div>
+    </div>
+
+    <!-- Main Container HUD -->
+    <div class="hud-wrapper">
+        <!-- Top Navigation / Telemetry Bar -->
+        <header class="hud-header">
+            <div class="header-left">
+                <div class="stark-badge">
+                    <span class="stark-symbol">◈</span>
+                    <span class="stark-title">STARK INDUSTRIES</span>
+                </div>
+                <div class="system-id">
+                    <span class="hud-dim">AI SYSTEM:</span>
+                    <span class="hud-bright text-glow">J.A.R.V.I.S. v4.2</span>
+                </div>
+            </div>
+
+            <div class="header-center">
+                <div class="hud-status-chip" id="hudStatusChip">
+                    <span class="status-pulse"></span>
+                    <span class="status-label" id="statusLabel">SYSTEMS ONLINE</span>
+                </div>
+            </div>
+
+            <div class="header-right">
+                <div class="hud-clock">
+                    <span id="hudTime" class="time-display">00:00:00</span>
+                    <span id="hudDate" class="date-display">OCT 15, 2026</span>
+                </div>
+                <button id="btnSettings" class="hud-btn-icon" title="System Configuration" aria-label="Settings">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="3"></circle>
+                        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                    </svg>
+                </button>
+            </div>
+        </header>
+
+        <!-- Main Body Grid: Left Diagnostics | Center Arc Reactor & Chat | Right Tasks & Notes -->
+        <main class="hud-main-grid">
+            <!-- LEFT PANEL: Telemetry, Audio Controls, Protocols -->
+            <aside class="hud-panel left-panel">
+                <div class="panel-corner corner-tl"></div>
+                <div class="panel-corner corner-tr"></div>
+                <div class="panel-corner corner-bl"></div>
+                <div class="panel-corner corner-br"></div>
+
+                <div class="panel-header">
+                    <span class="panel-tag">// 01</span>
+                    <h2 class="panel-title">TELEMETRY & PROTOCOLS</h2>
+                </div>
+
+                <div class="panel-content scrollable">
+                    <!-- Diagnostics Gauges -->
+                    <div class="telemetry-section">
+                        <div class="telemetry-item">
+                            <div class="telemetry-info">
+                                <span class="telem-label">NEURAL CORE</span>
+                                <span class="telem-val" id="coreLoad">98.4% OPTIMAL</span>
+                            </div>
+                            <div class="hud-progress-bar">
+                                <div class="hud-progress-fill" id="coreLoadBar" style="width: 98%;"></div>
+                            </div>
+                        </div>
+
+                        <div class="telemetry-item">
+                            <div class="telemetry-info">
+                                <span class="telem-label">BATTERY / POWER</span>
+                                <span class="telem-val" id="powerStatus">SCANNING...</span>
+                            </div>
+                            <div class="hud-progress-bar">
+                                <div class="hud-progress-fill" id="powerBar" style="width: 85%;"></div>
+                            </div>
+                        </div>
+
+                        <div class="telemetry-item">
+                            <div class="telemetry-info">
+                                <span class="telem-label">NETWORK UPLINK</span>
+                                <span class="telem-val" id="netStatus">ONLINE (1000 Mbps)</span>
+                            </div>
+                            <div class="hud-progress-bar">
+                                <div class="hud-progress-fill" id="netBar" style="width: 100%;"></div>
+                            </div>
+                        </div>
+
+                        <div class="telemetry-item">
+                            <div class="telemetry-info">
+                                <span class="telem-label">UPTIME</span>
+                                <span class="telem-val" id="uptimeCounter">00:00:00</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Quick Protocols / Modes -->
+                    <div class="protocols-section">
+                        <h3 class="sub-heading">DEFENSE & PROTOCOLS</h3>
+                        <div class="protocol-grid">
+                            <button class="protocol-btn" data-protocol="house-party">
+                                <span class="proto-icon">⚡</span>
+                                <span class="proto-name">House Party</span>
+                            </button>
+                            <button class="protocol-btn" data-protocol="stealth">
+                                <span class="proto-icon">👁</span>
+                                <span class="proto-name">Stealth Mode</span>
+                            </button>
+                            <button class="protocol-btn" data-protocol="diagnostic">
+                                <span class="proto-icon">🛡</span>
+                                <span class="proto-name">Diagnostics</span>
+                            </button>
+                            <button class="protocol-btn" data-protocol="red-alert">
+                                <span class="proto-icon">🚨</span>
+                                <span class="proto-name">Red Alert</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Quick Voice Commands Cheat-sheet -->
+                    <div class="voice-cheatsheet">
+                        <h3 class="sub-heading">VOICE COMMANDS</h3>
+                        <ul class="command-list">
+                            <li><span class="cmd-pill">"What's the weather"</span> Live weather report</li>
+                            <li><span class="cmd-pill">"Tell me a joke"</span> Stark AI humor</li>
+                            <li><span class="cmd-pill">"Add task: [action]"</span> Logs personal directive</li>
+                            <li><span class="cmd-pill">"System status"</span> Deep hardware scan</li>
+                            <li><span class="cmd-pill">"Theme [cyan/gold/emerald]"</span> Shift HUD armor</li>
+                            <li><span class="cmd-pill">"Clear logs"</span> Wipes transmission</li>
+                        </ul>
+                    </div>
+
+                    <!-- Theme Switcher Buttons -->
+                    <div class="theme-section">
+                        <h3 class="sub-heading">ARMOR THEME MATRIX</h3>
+                        <div class="theme-buttons">
+                            <button class="theme-btn active" data-theme="theme-cyan" title="Mark IV Cyan">
+                                <span class="theme-swatch cyan"></span> Cyan
+                            </button>
+                            <button class="theme-btn" data-theme="theme-gold" title="Mark VII Gold & Crimson">
+                                <span class="theme-swatch gold"></span> Stark Gold
+                            </button>
+                            <button class="theme-btn" data-theme="theme-emerald" title="Stealth Emerald">
+                                <span class="theme-swatch emerald"></span> Emerald
+                            </button>
+                            <button class="theme-btn" data-theme="theme-violet" title="Quantum Violet">
+                                <span class="theme-swatch violet"></span> Violet
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+
+            <!-- CENTER PANEL: Arc Reactor Hologram, Waveform, Speech Terminal, Input -->
+            <section class="hud-panel center-panel">
+                <div class="panel-corner corner-tl"></div>
+                <div class="panel-corner corner-tr"></div>
+                <div class="panel-corner corner-bl"></div>
+                <div class="panel-corner corner-br"></div>
+
+                <div class="reactor-container">
+                    <!-- Interactive Arc Reactor Visualizer Canvas -->
+                    <div class="reactor-canvas-wrapper" id="reactorTrigger" title="Click to Activate Voice Recognition">
+                        <canvas id="reactorCanvas" width="380" height="380"></canvas>
+                        <div class="reactor-core-glow"></div>
+                        <div class="tap-hint">
+                            <span class="tap-icon">🎙️</span>
+                            <span class="tap-text">CLICK REACTOR OR PRESS MIC</span>
+                        </div>
+                    </div>
+
+                    <!-- Audio Waveform Canvas -->
+                    <div class="waveform-container">
+                        <canvas id="waveformCanvas" width="500" height="40"></canvas>
+                    </div>
+
+                    <!-- Voice Agent State Banner -->
+                    <div class="agent-state-display" id="agentStateBanner">
+                        <span class="agent-mode-tag">STANDBY</span>
+                        <span class="agent-mode-desc">Awaiting your instruction, Sir.</span>
+                    </div>
+                </div>
+
+                <!-- Live Conversation Stream -->
+                <div class="conversation-container scrollable" id="conversationStream">
+                    <div class="message-entry jarvis-msg">
+                        <div class="msg-avatar">J</div>
+                        <div class="msg-content">
+                            <div class="msg-sender">J.A.R.V.I.S. <span class="msg-time">ONLINE</span></div>
+                            <div class="msg-body">
+                                Good day, Sir. All micro-thrusters, neural processors, and sensory telemetry are online and running at peak performance. How may I be of service today?
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- HUD Command Bar Input -->
+                <div class="hud-input-bar">
+                    <button id="btnVoiceToggle" class="mic-toggle-btn" title="Toggle Voice Recognition" aria-label="Toggle Voice Input">
+                        <svg class="mic-svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
+                            <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                            <line x1="12" y1="19" x2="12" y2="23"></line>
+                            <line x1="8" y1="23" x2="16" y2="23"></line>
+                        </svg>
+                        <span class="mic-pulse-ring"></span>
+                    </button>
+
+                    <input type="text" id="commandInput" class="hud-input" placeholder="Initiate command or speak to J.A.R.V.I.S..." autocomplete="off">
+
+                    <button id="btnSubmitCommand" class="hud-send-btn" title="Execute Command" aria-label="Send Command">
+                        <span class="send-text">ENGAGE</span>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="22" y1="2" x2="11" y2="13"></line>
+                            <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                        </svg>
+                    </button>
+
+                    <button id="btnSoundToggle" class="hud-btn-icon" title="Toggle Audio Sound Effects" aria-label="Audio SFX">
+                        <span id="soundIcon">🔊</span>
+                    </button>
+                </div>
+            </section>
+
+            <!-- RIGHT PANEL: Mission Directives (Tasks), Tactical Notes, Live Weather & Intel -->
+            <aside class="hud-panel right-panel">
+                <div class="panel-corner corner-tl"></div>
+                <div class="panel-corner corner-tr"></div>
+                <div class="panel-corner corner-bl"></div>
+                <div class="panel-corner corner-br"></div>
+
+                <div class="panel-header">
+                    <span class="panel-tag">// 02</span>
+                    <h2 class="panel-title">MISSION DIRECTIVES</h2>
+                </div>
+
+                <div class="panel-content scrollable">
+                    <!-- Weather & Environment Widget -->
+                    <div class="hud-widget weather-widget">
+                        <div class="widget-header">
+                            <span class="sub-heading">ATMOSPHERIC SENSORS</span>
+                            <button id="btnRefreshWeather" class="mini-btn" title="Scan Atmospheric Data">SCAN</button>
+                        </div>
+                        <div class="weather-body" id="weatherWidgetBody">
+                            <div class="weather-temp-block">
+                                <span class="weather-icon" id="weatherIcon">☀️</span>
+                                <span class="weather-temp" id="weatherTemp">24°C</span>
+                            </div>
+                            <div class="weather-meta">
+                                <div class="weather-loc" id="weatherLoc">MALIBU POINT, CA</div>
+                                <div class="weather-desc" id="weatherDesc">Skies clear. Optimal flight conditions.</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Personal Task / Mission Directives Tracker -->
+                    <div class="hud-widget task-widget">
+                        <div class="widget-header">
+                            <span class="sub-heading">ACTIVE OBJECTIVES</span>
+                            <span class="task-counter" id="taskCount">3 PENDING</span>
+                        </div>
+
+                        <form id="taskForm" class="task-input-form">
+                            <input type="text" id="taskInput" class="mini-input" placeholder="Add new mission directive..." required>
+                            <button type="submit" class="mini-submit-btn">+</button>
+                        </form>
+
+                        <ul class="task-list" id="taskList">
+                            <!-- Tasks populated via JavaScript -->
+                        </ul>
+                    </div>
+
+                    <!-- Tactical Notes & Scratchpad -->
+                    <div class="hud-widget notes-widget">
+                        <div class="widget-header">
+                            <span class="sub-heading">TACTICAL SCRATCHPAD</span>
+                            <button id="btnSaveNotes" class="mini-btn">SAVE</button>
+                        </div>
+                        <textarea id="notesArea" class="hud-textarea" placeholder="Classified notes, project parameters, coordinates..."></textarea>
+                    </div>
+
+                    <!-- System Audio Logs -->
+                    <div class="hud-widget logs-widget">
+                        <div class="widget-header">
+                            <span class="sub-heading">TELEMETRY FEED</span>
+                            <button id="btnClearTelemetry" class="mini-btn">CLEAR</button>
+                        </div>
+                        <div class="telemetry-log-stream" id="telemetryLogs">
+                            <div class="log-row"><span class="log-time">[INIT]</span> Neural lattice connected.</div>
+                            <div class="log-row"><span class="log-time">[AUDIO]</span> Web Audio oscillators primed.</div>
+                            <div class="log-row"><span class="log-time">[SYS]</span> Vocal recognition ready.</div>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+        </main>
+
+        <!-- Bottom Status Bar -->
+        <footer class="hud-footer">
+            <div class="footer-left">
+                <span class="hud-tag">SECURITY CLEARANCE: LEVEL 10</span>
+                <span class="hud-tag">USER: TONY STARK</span>
+            </div>
+            <div class="footer-center">
+                <span id="speechFeedbackText" class="speech-live-caption">Vocal telemetry standing by...</span>
+            </div>
+            <div class="footer-right">
+                <span class="hud-tag">LATENCY: <span id="networkPing">12ms</span></span>
+                <span class="hud-tag">ARC OUTPUT: 3.2 GJ/s</span>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Settings & API Key Configuration Modal -->
+    <div class="hud-modal" id="settingsModal" aria-hidden="true">
+        <div class="modal-backdrop" id="modalBackdrop"></div>
+        <div class="modal-window">
+            <div class="panel-corner corner-tl"></div>
+            <div class="panel-corner corner-tr"></div>
+            <div class="panel-corner corner-bl"></div>
+            <div class="panel-corner corner-br"></div>
+
+            <div class="modal-header">
+                <h3 class="modal-title">J.A.R.V.I.S. CONFIGURATION & AI CORE</h3>
+                <button id="btnCloseSettings" class="modal-close-btn" aria-label="Close Modal">&times;</button>
+            </div>
+
+            <div class="modal-body">
+                <div class="setting-group">
+                    <label class="setting-label" for="userNameInput">User Codename</label>
+                    <input type="text" id="userNameInput" class="setting-input" value="Sir" placeholder="e.g. Sir, Tony, Commander">
+                    <small class="setting-hint">Jarvis will address you by this name.</small>
+                </div>
+
+                <div class="setting-group">
+                    <label class="setting-label" for="voiceSelect">Speech Synthesis Voice</label>
+                    <select id="voiceSelect" class="setting-select"></select>
+                    <small class="setting-hint">Select your preferred Jarvis vocal profile (English - UK recommended).</small>
+                </div>
+
+                <div class="setting-row">
+                    <div class="setting-group half">
+                        <label class="setting-label" for="voiceRate">Voice Speed: <span id="rateVal">1.0</span>x</label>
+                        <input type="range" id="voiceRate" min="0.7" max="1.5" step="0.1" value="1.0" class="setting-slider">
+                    </div>
+                    <div class="setting-group half">
+                        <label class="setting-label" for="voicePitch">Voice Pitch: <span id="pitchVal">1.0</span></label>
+                        <input type="range" id="voicePitch" min="0.5" max="1.5" step="0.1" value="1.0" class="setting-slider">
+                    </div>
+                </div>
+
+                <div class="setting-group">
+                    <label class="setting-label" for="apiKeyInput">Optional Frontier LLM API Key (Gemini / OpenAI)</label>
+                    <input type="password" id="apiKeyInput" class="setting-input" placeholder="Enter API Key to unlock unlimited deep reasoning...">
+                    <small class="setting-hint">Stored strictly in local browser storage. If left empty, Jarvis uses his comprehensive built-in offline NLP knowledge engine!</small>
+                </div>
+
+                <div class="setting-group">
+                    <label class="setting-label" for="apiProviderSelect">AI Intelligence Provider</label>
+                    <select id="apiProviderSelect" class="setting-select">
+                        <option value="builtin">Built-in Stark Autonomous Engine (Instant Offline)</option>
+                        <option value="gemini">Google Gemini 1.5 Flash (via API Key)</option>
+                        <option value="openai">OpenAI GPT-4o Mini (via API Key)</option>
+                    </select>
+                </div>
+
+                <div class="setting-group checkbox-group">
+                    <label class="hud-checkbox-label">
+                        <input type="checkbox" id="chkScanlines" checked>
+                        <span>Enable CRT Holographic Scanlines Effect</span>
+                    </label>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button id="btnResetSettings" class="hud-btn secondary">RESTORE DEFAULTS</button>
+                <button id="btnSaveSettings" class="hud-btn primary">SAVE & ENGAGE</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modular Scripts -->
+    <script src="js/sound.js"></script>
+    <script src="js/visualizer.js"></script>
+    <script src="js/speech.js"></script>
+    <script src="js/agent.js"></script>
+    <script src="js/app.js"></script>
 </body>
 </html>
