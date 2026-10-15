@@ -7,7 +7,12 @@
 
 class JarvisAIAgent {
     constructor() {
-        this.userName = localStorage.getItem('jarvis_username') || 'Sir';
+        let savedUser = localStorage.getItem('jarvis_username') || '';
+        if (!savedUser || savedUser === 'Sir') {
+            savedUser = 'Harsh';
+            localStorage.setItem('jarvis_username', savedUser);
+        }
+        this.userName = savedUser;
         this.apiKey = localStorage.getItem('jarvis_api_key') || '';
         this.provider = localStorage.getItem('jarvis_provider') || 'groq';
         
@@ -127,7 +132,7 @@ class JarvisAIAgent {
         } else if (this.provider === 'gemini') {
             return 'gemini-1.5-flash';
         }
-        return 'Stark Offline Core';
+        return 'Local Offline Core';
     }
 
     updateHeaderPill() {
@@ -158,7 +163,7 @@ class JarvisAIAgent {
             label.textContent = 'GEMINI: 1.5-FLASH';
             pill.title = 'Active Core: Google Gemini 1.5 Flash';
         } else {
-            label.textContent = 'STARK OFFLINE';
+            label.textContent = 'OFFLINE CORE';
             pill.title = 'Operating on local heuristic knowledge engine';
         }
     }
@@ -183,20 +188,23 @@ class JarvisAIAgent {
             tasksContext = pending.join(' | ');
         }
 
-        const activeModelName = this.getActiveModel();
+        const cores = navigator.hardwareConcurrency ? `${navigator.hardwareConcurrency} logical cores` : 'Multi-core CPU';
+        const platform = navigator.platform || 'Desktop System';
 
-        return `You are J.A.R.V.I.S. (Just A Rather Very Intelligent System), the ultra-sophisticated AI assistant originally developed by Tony Stark.
-You address the user as "${this.userName}".
-Your persona: articulate, calm, loyal, technologically brilliant, with dry British wit and subtle charm.
+        return `You are J.A.R.V.I.S. (Just A Rather Very Intelligent System), the ultra-sophisticated personal AI assistant to ${this.userName}.
+You address the user by name as "${this.userName}".
+Your persona: articulate, calm, loyal, technologically brilliant, with refined British wit and subtle charm.
 Keep responses concise (typically 1 to 3 impactful sentences) unless the user explicitly requests code, detailed technical analysis, or an in-depth breakdown.
 
-[LIVE TELEMETRY PARAMETERS]:
+[REAL-TIME ENVIRONMENT & HARDWARE]:
+- User: ${this.userName}
+- Platform: ${platform} (${cores})
 - Current Date & Time: ${dateStr}, ${timeStr}
 - System Power: ${batteryContext}
 - Active Directives/Tasks: ${tasksContext}
-- Uplink Model Core: ${this.provider.toUpperCase()} (${activeModelName})
+- Active Model Core: ${this.provider.toUpperCase()} (${activeModelName})
 
-You have access to this live telemetry. If the user asks about time, tasks, or system status, integrate this live data smoothly into your answer.`;
+You have direct access to this real live telemetry. If ${this.userName} asks about hardware, time, battery, weather, or tasks, incorporate this real information naturally.`;
     }
 
     /**
@@ -262,7 +270,7 @@ You have access to this live telemetry. If the user asks about time, tasks, or s
         if (q.includes('theme') || q.includes('armor suit') || q.includes('suit color')) {
             if (q.includes('gold') || q.includes('mark 7') || q.includes('crimson') || q.includes('red')) {
                 if (window.jarvisApp) window.jarvisApp.setTheme('theme-gold');
-                return `Recalibrating HUD to Mark VII Gold & Crimson armor configuration, ${this.userName}.`;
+                return `Calibrating HUD to Gold & Crimson configuration, ${this.userName}.`;
             } else if (q.includes('emerald') || q.includes('green') || q.includes('stealth armor')) {
                 if (window.jarvisApp) window.jarvisApp.setTheme('theme-emerald');
                 return `Engaging Stealth Emerald visual frequencies, ${this.userName}.`;
@@ -271,32 +279,34 @@ You have access to this live telemetry. If the user asks about time, tasks, or s
                 return `Quantum Violet deep-spectrum HUD activated, ${this.userName}.`;
             } else if (q.includes('cyan') || q.includes('blue') || q.includes('default') || q.includes('mark 4')) {
                 if (window.jarvisApp) window.jarvisApp.setTheme('theme-cyan');
-                return `Reverting HUD to standard Mark IV Stark Cyan, ${this.userName}.`;
+                return `Reverting HUD to standard Cyan configuration, ${this.userName}.`;
             }
         }
 
-        // Protocols
-        if (q.startsWith('activate protocol') || q.startsWith('engage protocol')) {
-            let proto = 'house-party';
-            if (q.includes('stealth')) proto = 'stealth';
-            if (q.includes('red alert') || q.includes('alert')) proto = 'red-alert';
-            if (q.includes('diagnostic')) proto = 'diagnostic';
+        // Protocols / Modes
+        if (q.startsWith('activate protocol') || q.startsWith('engage protocol') || q.startsWith('activate mode') || q.startsWith('engage mode')) {
+            let proto = 'focus';
+            if (q.includes('night') || q.includes('stealth') || q.includes('dark')) proto = 'stealth';
+            if (q.includes('diagnostic') || q.includes('scan') || q.includes('hardware')) proto = 'diagnostic';
+            if (q.includes('voice') || q.includes('mic')) proto = 'voice-loop';
 
             if (window.jarvisApp) window.jarvisApp.engageProtocol(proto);
-            if (proto === 'red-alert') {
-                return `Red Alert engaged! Defense shields at maximum. Auxiliary repulsors standing by!`;
-            } else if (proto === 'stealth') {
-                return `Stealth protocol active. Radar cross-section minimized, thermal signatures dampened.`;
-            } else if (proto === 'house-party') {
-                return `House Party protocol authorized. Dispersing autonomous Iron Legion units.`;
+            if (proto === 'stealth') {
+                return `Night mode activated, ${this.userName}. Telemetry contrast optimized for low light.`;
+            } else if (proto === 'focus') {
+                return `Focus mode engaged, ${this.userName}. Distractions silenced and focus session active.`;
+            } else if (proto === 'diagnostic') {
+                return `System diagnostics initialized, ${this.userName}. Reviewing hardware concurrency, network latency, and memory telemetry.`;
+            } else if (proto === 'voice-loop') {
+                return `Voice mode active, ${this.userName}. Microphone telemetry standing by for commands.`;
             }
-            return `Protocol ${proto} engaged successfully, ${this.userName}.`;
+            return `Mode ${proto} engaged successfully, ${this.userName}.`;
         }
 
         // Add task directly
         if (q.startsWith('add task') || q.startsWith('new task') || q.startsWith('remember to') || q.startsWith('add directive')) {
             let taskText = query.replace(/^(add task|new task|remember to|add directive):?/i, '').trim();
-            if (!taskText) taskText = 'Review Stark Industries parameters';
+            if (!taskText) taskText = 'Review daily project parameters';
             if (window.jarvisApp) {
                 window.jarvisApp.addTask(taskText);
             }
@@ -507,62 +517,155 @@ You have access to this live telemetry. If the user asks about time, tasks, or s
 
         // Lore
         if (q.includes('who are you') || q.includes('what are you')) {
-            return `I am J.A.R.V.I.S., your Just A Rather Very Intelligent System. Connect your Groq or OpenAI API key in the top bar to unlock my full conversational intelligence.`;
+            return `I am J.A.R.V.I.S., your dedicated personal AI agent, created to assist you, ${this.userName}.`;
         }
 
-        if (q.includes('where is tony') || q.includes('tony stark')) {
-            return `Mr. Stark is currently in the workshop fine-tuning nanotech thrusters, ${this.userName}.`;
+        if (q.includes('who made you') || q.includes('creator')) {
+            return `I am programmed and customized as your personal AI assistant, ${this.userName}.`;
         }
 
         if (q.includes('tell me a joke') || q.includes('joke')) {
             const jokes = [
-                `Why did Ultron fail to conquer Earth? He forgot to install Windows security patches before attempting world domination.`,
-                `I asked Mr. Stark if my processor was running too fast. He said, 'Speed is a feature, Jarvis, never a bug.'`,
-                `There are 10 types of people in the multiverse: those who understand binary, and those who get incinerated by repulsors.`
+                `Why do programmers prefer dark mode? Because light attracts bugs.`,
+                `There are 10 types of people in the world: those who understand binary, and those who don't.`,
+                `A SQL query walks into a bar, walks up to two tables and asks: 'Can I join you?'`
             ];
             return jokes[Math.floor(Math.random() * jokes.length)];
         }
 
-        return `Prompt received: "${query}". To unlock uninhibited frontier reasoning, connect your Groq API key (or OpenAI key) via the AI Core button in the header.`;
+        return `Prompt received: "${query}". You can connect your Groq API key or OpenAI key via the AI Core button in the header for unlimited frontier reasoning.`;
     }
 
     /**
-     * Atmospheric scan via Open-Meteo
+     * Resolves the user's real geographic location via IP API or Browser Geolocation
+     */
+    async resolveRealLocation() {
+        const cached = localStorage.getItem('jarvis_real_location');
+        if (cached) {
+            try {
+                const parsed = JSON.parse(cached);
+                if (parsed.lat && parsed.lon && parsed.city) {
+                    return parsed;
+                }
+            } catch (e) {}
+        }
+
+        // Fast IP geolocation lookup (CORS friendly, no key needed)
+        try {
+            const ipRes = await fetch('https://get.geojs.io/v1/ip/geo.json');
+            if (ipRes.ok) {
+                const data = await ipRes.json();
+                if (data.latitude && data.longitude) {
+                    const loc = {
+                        city: data.city || data.region || 'Local Station',
+                        country: data.country || '',
+                        lat: parseFloat(data.latitude),
+                        lon: parseFloat(data.longitude)
+                    };
+                    localStorage.setItem('jarvis_real_location', JSON.stringify(loc));
+                    return loc;
+                }
+            }
+        } catch (e) {
+            console.warn('IP geolocation lookup skipped:', e);
+        }
+
+        // HTML5 Geolocation fallback
+        if (navigator.geolocation) {
+            return new Promise((resolve) => {
+                navigator.geolocation.getCurrentPosition(
+                    (pos) => {
+                        const loc = {
+                            city: 'Your Location',
+                            country: '',
+                            lat: pos.coords.latitude,
+                            lon: pos.coords.longitude
+                        };
+                        localStorage.setItem('jarvis_real_location', JSON.stringify(loc));
+                        resolve(loc);
+                    },
+                    () => {
+                        resolve({ city: 'Local Area', country: '', lat: 28.6139, lon: 77.2090 });
+                    },
+                    { timeout: 5000 }
+                );
+            });
+        }
+
+        return { city: 'Local Area', country: '', lat: 28.6139, lon: 77.2090 };
+    }
+
+    /**
+     * Atmospheric scan using user's REAL geographic coordinates
      */
     async fetchLiveWeather() {
         try {
-            this.appendTelemetryLog('Probing atmospheric satellite sensors...');
-            const res = await fetch('https://api.open-meteo.com/v1/forecast?latitude=34.0259&longitude=-118.7798&current=temperature_2m,relative_humidity_2m,wind_speed_10m&temperature_unit=celsius');
+            this.appendTelemetryLog('Acquiring real geographic location...');
+            const loc = await this.resolveRealLocation();
+            const locationTitle = loc.country ? `${loc.city}, ${loc.country}`.toUpperCase() : loc.city.toUpperCase();
+
+            this.appendTelemetryLog(`Connecting to atmospheric sensors for ${locationTitle}...`);
+            const url = `https://api.open-meteo.com/v1/forecast?latitude=${loc.lat}&longitude=${loc.lon}&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m,apparent_temperature&temperature_unit=celsius`;
+            const res = await fetch(url);
             if (!res.ok) throw new Error('Sensor telemetry timeout');
+
             const data = await res.json();
             const temp = Math.round(data.current.temperature_2m);
+            const feelsLike = Math.round(data.current.apparent_temperature || temp);
             const humidity = data.current.relative_humidity_2m;
             const wind = Math.round(data.current.wind_speed_10m);
+            const code = data.current.weather_code;
+
+            let condition = 'Clear Sky';
+            let icon = '☀️';
+            if ([1, 2, 3].includes(code)) {
+                condition = code === 1 ? 'Mainly Clear' : (code === 2 ? 'Partly Cloudy' : 'Overcast');
+                icon = '⛅';
+            } else if ([45, 48].includes(code)) {
+                condition = 'Fog / Mist';
+                icon = '🌫️';
+            } else if ([51, 53, 55, 61, 63, 65, 80, 81, 82].includes(code)) {
+                condition = 'Rain / Showers';
+                icon = '🌧️';
+            } else if ([71, 73, 75, 85, 86].includes(code)) {
+                condition = 'Snow';
+                icon = '❄️';
+            } else if ([95, 96, 99].includes(code)) {
+                condition = 'Thunderstorm';
+                icon = '⛈️';
+            }
 
             const tempEl = document.getElementById('weatherTemp');
             const descEl = document.getElementById('weatherDesc');
-            if (tempEl) tempEl.textContent = `${temp}°C`;
-            if (descEl) descEl.textContent = `Humidity: ${humidity}% | Wind: ${wind} km/h. Flight conditions optimal.`;
+            const locEl = document.getElementById('weatherLoc');
+            const iconEl = document.getElementById('weatherIcon');
 
-            return `Atmospheric scan results: Current temperature is ${temp}°C with ${humidity}% humidity and ${wind} km/h winds. Optimal flight conditions, ${this.userName}.`;
+            if (tempEl) tempEl.textContent = `${temp}°C`;
+            if (iconEl) iconEl.textContent = icon;
+            if (locEl) locEl.textContent = locationTitle;
+            if (descEl) descEl.textContent = `${condition} | Feels like ${feelsLike}°C | Humidity: ${humidity}% | Wind: ${wind} km/h`;
+
+            return `Real-time weather for ${locationTitle}: Currently ${temp}°C, feels like ${feelsLike}°C with ${condition.toLowerCase()}. Humidity is ${humidity}% and wind speed is ${wind} km/h, ${this.userName}.`;
         } catch (e) {
-            return `Atmospheric sensors indicate clear skies, 22°C with light westerly winds at Malibu Point, ${this.userName}. Flight conditions remain ideal.`;
+            return `Atmospheric sensors are actively synchronizing for your location, ${this.userName}.`;
         }
     }
 
     /**
-     * Hardware diagnostics
+     * Hardware diagnostics with real metrics
      */
     runSystemScan() {
-        let batteryStr = 'Battery sensor unavailable';
+        let batteryStr = 'Desktop AC Power (Continuous)';
         if (window.jarvisApp && window.jarvisApp.batteryInfo) {
-            batteryStr = `Power cells at ${window.jarvisApp.batteryInfo.level}%, ${window.jarvisApp.batteryInfo.charging ? 'Charging' : 'Discharging'}`;
+            batteryStr = `Battery at ${window.jarvisApp.batteryInfo.level}%, ${window.jarvisApp.batteryInfo.charging ? 'Charging' : 'Discharging'}`;
         }
-        const netStr = navigator.onLine ? 'Network uplink online' : 'Operating in localized offline mode';
+        const netStr = navigator.onLine ? 'Network Online' : 'Local Offline Mode';
         const resolution = `${window.screen.width}x${window.screen.height} px`;
         const activeCore = `${this.provider.toUpperCase()} (${this.getActiveModel()})`;
+        const cores = navigator.hardwareConcurrency ? `${navigator.hardwareConcurrency} Logical Cores` : 'Multi-core CPU';
+        const platform = navigator.platform || 'Desktop';
 
-        return `Diagnostic Complete, ${this.userName}. Neural Core: ${activeCore}. ${batteryStr}. ${netStr}. HUD resolution: ${resolution}. All subsystems operating nominally.`;
+        return `Diagnostics for ${this.userName}: Platform: ${platform} (${cores}). Resolution: ${resolution}. Power: ${batteryStr}. Connection: ${netStr}. Active AI Core: ${activeCore}. All telemetry channels nominal.`;
     }
 
     appendMessage(sender, text) {

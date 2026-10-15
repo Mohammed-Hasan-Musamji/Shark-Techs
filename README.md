@@ -1,7 +1,7 @@
-# J.A.R.V.I.S. — Personal AI Agent & Stark Industries HUD
+# J.A.R.V.I.S. — Personal AI Agent HUD
 
 > **Just A Rather Very Intelligent System**  
-> An interactive Iron Man HUD, Holographic Arc Reactor visualizer, speech recognition & voice synthesis agent built with modern Web APIs, procedural Web Audio sound synthesis, and autonomous task intelligence.
+> An interactive Sci-Fi HUD, Holographic Arc Reactor visualizer, speech recognition & voice synthesis agent built with modern Web APIs, procedural Web Audio sound synthesis, real-time location atmospheric weather, real hardware telemetry, and frontier LLM intelligence for **Harsh**.
 
 ---
 
@@ -15,17 +15,18 @@
 
 - **Real-Time Voice & Audio Intelligence**:
   - **Speech-to-Text (`SpeechRecognition`)**: Speak naturally to Jarvis using your microphone.
-  - **Speech Synthesis (`SpeechSynthesis`)**: Refined British vocal synthesis matching the classic Marvel Jarvis persona (with adjustable pitch & speed).
-  - **Procedural Sound Engine (`Web Audio API`)**: Generates authentic Stark UI chimes, power sweeps, alerts, and clicks entirely in-browser without external audio assets.
+  - **Speech Synthesis (`SpeechSynthesis`)**: Refined British vocal synthesis matching the classic Jarvis persona (with adjustable pitch & speed).
+  - **Procedural Sound Engine (`Web Audio API`)**: Generates authentic UI chimes, power sweeps, alerts, and clicks entirely in-browser without external audio assets.
 
 - **Autonomous Agent Skills & Intent Engine**:
-  - **Atmospheric Sensors**: Queries live weather parameters (temperature, humidity, wind speed) via the Open-Meteo satellite API.
-  - **System Telemetry & Hardware Scan**: Monitors live battery percentage & charging status (`navigator.getBattery()`), network uplink speed, and uptime.
-  - **Mission Directives (Tasks)**: Add, complete, and track personal directives with persistent `localStorage`.
-  - **Tactical Scratchpad**: Encrypted notes stream with automatic timestamping.
-  - **Defense Protocols**: Instant triggers for *House Party*, *Stealth Mode*, *Diagnostics*, and *Red Alert*.
-  - **Armor Theme Matrix**: Real-time theme switching between Mark IV (Stark Cyan), Mark VII (Gold & Crimson), Stealth Emerald, and Quantum Violet.
-  - **Groq & OpenAI Frontier LLM Core for Prompts**:
+  - **Real Atmospheric Location & Weather**: Dynamically detects the user's real geographic location via IP geolocation / HTML5 geolocation and fetches live real-time conditions (temperature, feels-like, humidity, wind speed) from Open-Meteo.
+  - **Real Hardware Telemetry**: Monitors actual logical CPU cores (`navigator.hardwareConcurrency`), real round-trip network ping latency, real battery status or desktop AC power (`navigator.getBattery()`), and operating system platform.
+  - **Personal Mission Directives (Tasks)**: Add, complete, and track directives with persistent `localStorage`.
+  - **Tactical Scratchpad**: Notes stream with automatic timestamping.
+  - **System Modes & Protocols**: Instant triggers for *Focus Mode*, *Night Mode*, *Diagnostics*, and *Voice Mode*.
+  - **Armor Theme Matrix**: Real-time theme switching between Mark IV (Cyan), Mark VII (Gold & Crimson), Stealth Emerald, and Quantum Violet.
+
+- **Groq & OpenAI Frontier LLM Core for Prompts**:
   - **Groq Cloud Integration**: Ultra-fast LPU inference via OpenAI-compatible endpoints (`https://api.groq.com/openai/v1/chat/completions`) using `openai/gpt-oss-120b` (Default) or `mixtral-8x7b-32768`.
   - **OpenAI Official Models**: Take prompts with `gpt-4o-mini`, `gpt-4o`, or `gpt-3.5-turbo`.
   - **Multi-Turn Contextual Memory**: Jarvis remembers prior conversation turns and injects live HUD telemetry (power, tasks, date/time) directly into prompt reasoning.
@@ -49,16 +50,16 @@ You can click the **Arc Reactor** or the **Microphone** button and speak any of 
 
 | Voice Command | Action / Response |
 | :--- | :--- |
-| *"What's the weather?"* | Fetches live temperature, humidity, and flight conditions |
-| *"System status"* | Runs diagnostics on battery, network, resolution, and uptime |
+| *"What's the weather?"* | Fetches live temperature and conditions for your detected city |
+| *"System status"* | Runs real diagnostics on CPU cores, latency, battery, and uptime |
 | *"Add task: [directive]"* | Stores a new directive into active mission objectives |
 | *"Show directives"* | Summarizes pending objectives |
-| *"Save note: [classified data]"* | Appends timestamped note to the tactical scratchpad |
-| *"Activate protocol [house party/stealth/red alert]"* | Triggers defensive audio sweeps and visual alerts |
+| *"Save note: [notes]"* | Appends timestamped note to the scratchpad |
+| *"Activate protocol [focus/night/diagnostic/voice]"* | Engages system mode sweeps and visual cues |
 | *"Switch theme to [gold/cyan/emerald/violet]"* | Recalibrates HUD armor color matrix |
 | *"Calculate [math expression]"* | Solves arithmetic computations on the fly |
-| *"Search Google for [query]"* | Launches satellite uplink web search in a new tab |
-| *"Who are you?"* / *"Tell me a joke"* | Stark Industries AI lore and humor |
+| *"Search Google for [query]"* | Launches web search in a new tab |
+| *"Who are you?"* / *"Tell me a joke"* | AI persona and programming humor |
 
 ---
 

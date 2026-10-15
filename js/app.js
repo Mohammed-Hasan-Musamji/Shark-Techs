@@ -19,6 +19,9 @@ class JarvisAppController {
         // Initialize Visualizer once DOM is ready
         window.jarvisVisualizer = new ArcReactorVisualizer();
 
+        // Update real footer and header metadata
+        this.updateFooterAndHeaderLabels();
+
         // Load persisted state
         this.loadTasks();
         this.loadNotes();
@@ -33,14 +36,64 @@ class JarvisAppController {
         // Start clock & uptime timer
         this.startTimers();
 
-        // Initial atmospheric weather scan
+        // Initial atmospheric weather scan & real ping test
         setTimeout(() => {
             if (window.jarvisAgent) {
                 window.jarvisAgent.fetchLiveWeather();
             }
-        }, 1200);
+            this.measureRealPing();
+        }, 800);
+
+        // Periodic real ping test every 10s
+        setInterval(() => {
+            this.measureRealPing();
+        }, 10000);
 
         console.log('J.A.R.V.I.S. Systems Online and Fully Operational.');
+    }
+
+    getUserName() {
+        let name = localStorage.getItem('jarvis_username');
+        if (!name || name === 'Sir' || name === 'Tony Stark') {
+            name = 'Harsh';
+            localStorage.setItem('jarvis_username', 'Harsh');
+        }
+        return name;
+    }
+
+    updateFooterAndHeaderLabels() {
+        const name = this.getUserName();
+        const headerTitle = document.getElementById('hudSystemTitle');
+        const footerUser = document.getElementById('footerUser');
+        const footerPlatform = document.getElementById('footerPlatform');
+        const footerCores = document.getElementById('footerCores');
+
+        if (headerTitle) {
+            headerTitle.textContent = `${name.toUpperCase()}'S AI AGENT`;
+        }
+        if (footerUser) {
+            footerUser.textContent = name.toUpperCase();
+        }
+        if (footerPlatform) {
+            const rawPlat = navigator.platform || (navigator.userAgentData && navigator.userAgentData.platform) || 'WIN32';
+            footerPlatform.textContent = rawPlat.toUpperCase();
+        }
+        if (footerCores) {
+            footerCores.textContent = `${navigator.hardwareConcurrency || 8} CORES`;
+        }
+    }
+
+    async measureRealPing() {
+        const pingEl = document.getElementById('networkPing');
+        const start = performance.now();
+        try {
+            await fetch(`/?_ping=${Date.now()}`, { method: 'HEAD', cache: 'no-store' });
+            const duration = Math.max(1, Math.round(performance.now() - start));
+            if (pingEl) pingEl.textContent = `${duration}ms`;
+        } catch (e) {
+            const duration = Math.max(1, Math.round(performance.now() - start));
+            if (pingEl) pingEl.textContent = `${duration}ms`;
+        }
     }
 
     /* ==========================================================================
@@ -308,25 +361,44 @@ class JarvisAppController {
     }
 
     /* ==========================================================================
-       PROTOCOLS CONTROLLER
+       PROTOCOLS & MODES CONTROLLER
        ========================================================================== */
     engageProtocol(protocolName) {
         document.querySelectorAll('.protocol-btn').forEach(b => b.classList.remove('active'));
         const activeBtn = document.querySelector(`.protocol-btn[data-protocol="${protocolName}"]`);
         if (activeBtn) activeBtn.classList.add('active');
 
-        if (protocolName === 'red-alert') {
-            if (window.jarvisSound) window.jarvisSound.playAlert();
-            this.flashStatus('RED ALERT ENGAGED', '#ff3366');
-        } else if (protocolName === 'house-party') {
+        if (protocolName === 'focus') {
             if (window.jarvisSound) window.jarvisSound.playProtocolEngaged();
-            this.flashStatus('HOUSE PARTY PROTOCOL', '#ffc837');
+            this.flashStatus('FOCUS MODE ACTIVE', '#00f0ff');
+            if (window.jarvisAgent) {
+                window.jarvisAgent.appendTelemetryLog('Focus mode engaged: Notification sounds suppressed, deep work session active.');
+            }
         } else if (protocolName === 'stealth') {
             if (window.jarvisSound) window.jarvisSound.playProtocolEngaged();
-            this.flashStatus('STEALTH MODE ENGAGED', '#00ff88');
+            this.flashStatus('NIGHT MODE ACTIVE', '#a855f7');
+            this.setTheme('theme-emerald');
+            if (window.jarvisAgent) {
+                window.jarvisAgent.appendTelemetryLog('Night mode engaged: Contrast adjusted for low-light environment.');
+            }
+        } else if (protocolName === 'diagnostic') {
+            if (window.jarvisSound) window.jarvisSound.playProcessComplete();
+            this.flashStatus('RUNNING DIAGNOSTICS', '#00ff88');
+            if (window.jarvisAgent) {
+                window.jarvisAgent.runSystemScan().then(scanResult => {
+                    window.jarvisAgent.appendMessage('jarvis', scanResult);
+                    if (window.jarvisSpeech) window.jarvisSpeech.speak(scanResult);
+                });
+            }
+        } else if (protocolName === 'voice-loop') {
+            if (window.jarvisSound) window.jarvisSound.playProtocolEngaged();
+            this.flashStatus('VOICE MODE READY', '#ffc837');
+            if (window.jarvisSpeech) {
+                window.jarvisSpeech.startListening();
+            }
         } else {
             if (window.jarvisSound) window.jarvisSound.playProtocolEngaged();
-            this.flashStatus('DIAGNOSTICS ACTIVE', '#00f0ff');
+            this.flashStatus('SYSTEMS OPERATIONAL', '#00f0ff');
         }
     }
 
@@ -352,7 +424,6 @@ class JarvisAppController {
         const timeEl = document.getElementById('hudTime');
         const dateEl = document.getElementById('hudDate');
         const uptimeEl = document.getElementById('uptimeCounter');
-        const pingEl = document.getElementById('networkPing');
 
         const updateClock = () => {
             const now = new Date();
@@ -371,11 +442,6 @@ class JarvisAppController {
                 const secs = String(this.uptimeSeconds % 60).padStart(2, '0');
                 uptimeEl.textContent = `${hrs}:${mins}:${secs}`;
             }
-
-            // Dynamic ping jitter
-            if (pingEl && Math.random() < 0.2) {
-                pingEl.textContent = `${10 + Math.floor(Math.random() * 8)}ms`;
-            }
         };
 
         updateClock();
@@ -383,7 +449,7 @@ class JarvisAppController {
     }
 
     /* ==========================================================================
-       TELEMETRY MONITORS (BATTERY, NETWORK, CORE LOAD)
+       TELEMETRY MONITORS (BATTERY, NETWORK, CPU HARDWARE)
        ========================================================================== */
     setupBatteryMonitor() {
         const powerStatus = document.getElementById('powerStatus');
@@ -397,7 +463,7 @@ class JarvisAppController {
                     this.batteryInfo = { level, charging };
 
                     if (powerStatus) {
-                        powerStatus.textContent = `${level}% ${charging ? '⚡ CHARGING' : 'DISCHARGING'}`;
+                        powerStatus.textContent = `${level}% ${charging ? '⚡ CHARGING' : 'BATTERY'}`;
                     }
                     if (powerBar) {
                         powerBar.style.width = `${level}%`;
@@ -408,10 +474,11 @@ class JarvisAppController {
                 battery.addEventListener('levelchange', update);
                 battery.addEventListener('chargingchange', update);
             }).catch(() => {
-                if (powerStatus) powerStatus.textContent = '100% ARC CELL';
+                if (powerStatus) powerStatus.textContent = 'AC POWER (100%)';
+                if (powerBar) powerBar.style.width = '100%';
             });
         } else {
-            if (powerStatus) powerStatus.textContent = '100% ARC CELL';
+            if (powerStatus) powerStatus.textContent = 'AC POWER (100%)';
             if (powerBar) powerBar.style.width = '100%';
         }
     }
@@ -422,8 +489,19 @@ class JarvisAppController {
 
         const updateNet = () => {
             const isOnline = navigator.onLine;
+            let statusText = 'ONLINE';
+            if (navigator.connection) {
+                if (navigator.connection.downlink) {
+                    statusText = `ONLINE (${navigator.connection.downlink} Mbps)`;
+                } else if (navigator.connection.effectiveType) {
+                    statusText = `ONLINE (${navigator.connection.effectiveType.toUpperCase()})`;
+                }
+            } else {
+                statusText = isOnline ? 'ONLINE (ACTIVE)' : 'OFFLINE';
+            }
+
             if (netStatus) {
-                netStatus.textContent = isOnline ? 'ONLINE (1000 Mbps)' : 'OFFLINE (LOCAL BUFFER)';
+                netStatus.textContent = isOnline ? statusText : 'OFFLINE (LOCAL BUFFER)';
                 netStatus.style.color = isOnline ? 'var(--primary-glow)' : '#ff3366';
             }
             if (netBar) {
@@ -433,19 +511,20 @@ class JarvisAppController {
 
         window.addEventListener('online', updateNet);
         window.addEventListener('offline', updateNet);
+        if (navigator.connection) {
+            navigator.connection.addEventListener('change', updateNet);
+        }
         updateNet();
     }
 
     setupTelemetryMonitors() {
         const coreLoad = document.getElementById('coreLoad');
         const coreLoadBar = document.getElementById('coreLoadBar');
+        const cores = navigator.hardwareConcurrency || 8;
+        const memory = navigator.deviceMemory ? `${navigator.deviceMemory}GB RAM` : 'OPTIMAL';
 
-        // Fluctuate neural load subtly
-        setInterval(() => {
-            const jitter = (97.8 + Math.random() * 1.8).toFixed(1);
-            if (coreLoad) coreLoad.textContent = `${jitter}% OPTIMAL`;
-            if (coreLoadBar) coreLoadBar.style.width = `${jitter}%`;
-        }, 3000);
+        if (coreLoad) coreLoad.textContent = `${cores} CORES (${memory})`;
+        if (coreLoadBar) coreLoadBar.style.width = '95%';
     }
 
     /* ==========================================================================
@@ -453,18 +532,31 @@ class JarvisAppController {
        ========================================================================== */
     loadTasks() {
         const stored = localStorage.getItem('jarvis_tasks');
+        let needsReset = false;
         if (stored) {
             try {
                 this.tasks = JSON.parse(stored);
+                // Sanitize old fictional Stark directives if found in localStorage
+                const hasStarkLore = this.tasks.some(t => 
+                    /mark 85|vibranium|arc reactor|orbital defense|iron legion|stark/i.test(t.text || '')
+                );
+                if (hasStarkLore || !Array.isArray(this.tasks) || this.tasks.length === 0) {
+                    needsReset = true;
+                }
             } catch (e) {
-                this.tasks = [];
+                needsReset = true;
             }
         } else {
-            // Default Initial Directives
+            needsReset = true;
+        }
+
+        if (needsReset) {
+            // Realistic Productivity & Development Directives for Harsh
             this.tasks = [
-                { id: 1, text: 'Review Mark 85 telemetry calibration', completed: false },
-                { id: 2, text: 'Calibrate Arc Reactor vibranium core', completed: true },
-                { id: 3, text: 'Verify orbital defense satellite handshake', completed: false }
+                { id: 1, text: 'Configure Groq API key in .env or Settings modal', completed: true },
+                { id: 2, text: 'Verify live weather telemetry for current location', completed: true },
+                { id: 3, text: 'Prompt Jarvis with openai/gpt-oss-120b for project tasks', completed: false },
+                { id: 4, text: 'Review real-time CPU and network latency diagnostics', completed: false }
             ];
             this.saveTasksToStorage();
         }
@@ -599,7 +691,7 @@ class JarvisAppController {
                 { id: 'gemini-1.5-flash', name: 'Google Gemini 1.5 Flash' }
             ],
             builtin: [
-                { id: 'builtin', name: 'Stark Offline Autonomous Engine' }
+                { id: 'builtin', name: 'Offline Autonomous Engine' }
             ]
         };
 
@@ -639,7 +731,7 @@ class JarvisAppController {
             } else {
                 keyInput.placeholder = 'Built-in offline mode active (no API key required)';
                 prefixHint.textContent = 'Offline Heuristics';
-                providerHint.textContent = 'Using localized Stark Industries NLP and autonomous offline skills.';
+                providerHint.textContent = 'Using localized browser NLP and autonomous offline capabilities.';
             }
         }
     }
@@ -648,9 +740,10 @@ class JarvisAppController {
         const savedTheme = localStorage.getItem('jarvis_theme') || 'theme-cyan';
         this.setTheme(savedTheme);
 
-        const name = localStorage.getItem('jarvis_username') || 'Sir';
+        const name = this.getUserName();
         const nameInput = document.getElementById('userNameInput');
         if (nameInput) nameInput.value = name;
+        this.updateFooterAndHeaderLabels();
 
         let apiKey = localStorage.getItem('jarvis_api_key') || '';
         const envKey = window.jarvisAgent ? window.jarvisAgent.getApiKey() : (window.__ENV__?.GROQ_API_KEY || window.__ENV__?.OPENAI_API_KEY || '');
@@ -707,8 +800,11 @@ class JarvisAppController {
         const voicePitch = document.getElementById('voicePitch');
         const voiceSelect = document.getElementById('voiceSelect');
 
+        const savedName = nameInput ? nameInput.value.trim() || 'Harsh' : 'Harsh';
+        localStorage.setItem('jarvis_username', savedName);
+
         if (window.jarvisAgent) {
-            window.jarvisAgent.setUserName(nameInput ? nameInput.value : 'Sir');
+            window.jarvisAgent.setUserName(savedName);
             window.jarvisAgent.setAiConfig(
                 keyInput ? keyInput.value : '',
                 provSelect ? provSelect.value : 'groq',
@@ -725,6 +821,8 @@ class JarvisAppController {
             }
         }
 
+        this.updateFooterAndHeaderLabels();
+
         if (window.jarvisSound) window.jarvisSound.playProcessComplete();
         if (window.jarvisAgent) {
             window.jarvisAgent.appendTelemetryLog(`AI Core configured: ${(provSelect ? provSelect.value : 'groq').toUpperCase()} (${window.jarvisAgent.getActiveModel()}).`);
@@ -738,6 +836,9 @@ class JarvisAppController {
         localStorage.removeItem('jarvis_model');
         localStorage.removeItem('jarvis_custom_model');
         localStorage.removeItem('jarvis_theme');
+        localStorage.removeItem('jarvis_tasks');
+        localStorage.removeItem('jarvis_real_location');
+        this.loadTasks();
         this.loadSettings();
         if (window.jarvisSound) window.jarvisSound.playClick();
     }

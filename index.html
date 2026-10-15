@@ -26,10 +26,10 @@
             <div class="header-left">
                 <div class="stark-badge">
                     <span class="stark-symbol">◈</span>
-                    <span class="stark-title">STARK INDUSTRIES</span>
+                    <span class="stark-title" id="hudSystemTitle">HARSH'S AI AGENT</span>
                 </div>
                 <div class="system-id">
-                    <span class="hud-dim">AI SYSTEM:</span>
+                    <span class="hud-dim">AGENT:</span>
                     <span class="hud-bright text-glow">J.A.R.V.I.S. v4.2</span>
                 </div>
             </div>
@@ -78,28 +78,28 @@
                     <div class="telemetry-section">
                         <div class="telemetry-item">
                             <div class="telemetry-info">
-                                <span class="telem-label">NEURAL CORE</span>
-                                <span class="telem-val" id="coreLoad">98.4% OPTIMAL</span>
+                                <span class="telem-label">CPU HARDWARE</span>
+                                <span class="telem-val" id="coreLoad">DETECTING...</span>
                             </div>
                             <div class="hud-progress-bar">
-                                <div class="hud-progress-fill" id="coreLoadBar" style="width: 98%;"></div>
+                                <div class="hud-progress-fill" id="coreLoadBar" style="width: 85%;"></div>
                             </div>
                         </div>
 
                         <div class="telemetry-item">
                             <div class="telemetry-info">
-                                <span class="telem-label">BATTERY / POWER</span>
+                                <span class="telem-label">POWER SUPPLY</span>
                                 <span class="telem-val" id="powerStatus">SCANNING...</span>
                             </div>
                             <div class="hud-progress-bar">
-                                <div class="hud-progress-fill" id="powerBar" style="width: 85%;"></div>
+                                <div class="hud-progress-fill" id="powerBar" style="width: 100%;"></div>
                             </div>
                         </div>
 
                         <div class="telemetry-item">
                             <div class="telemetry-info">
-                                <span class="telem-label">NETWORK UPLINK</span>
-                                <span class="telem-val" id="netStatus">ONLINE (1000 Mbps)</span>
+                                <span class="telem-label">NETWORK SPEED</span>
+                                <span class="telem-val" id="netStatus">ONLINE</span>
                             </div>
                             <div class="hud-progress-bar">
                                 <div class="hud-progress-fill" id="netBar" style="width: 100%;"></div>
@@ -108,7 +108,7 @@
 
                         <div class="telemetry-item">
                             <div class="telemetry-info">
-                                <span class="telem-label">UPTIME</span>
+                                <span class="telem-label">SESSION UPTIME</span>
                                 <span class="telem-val" id="uptimeCounter">00:00:00</span>
                             </div>
                         </div>
@@ -116,23 +116,23 @@
 
                     <!-- Quick Protocols / Modes -->
                     <div class="protocols-section">
-                        <h3 class="sub-heading">DEFENSE & PROTOCOLS</h3>
+                        <h3 class="sub-heading">MODES & PROTOCOLS</h3>
                         <div class="protocol-grid">
-                            <button class="protocol-btn" data-protocol="house-party">
-                                <span class="proto-icon">⚡</span>
-                                <span class="proto-name">House Party</span>
+                            <button class="protocol-btn" data-protocol="focus">
+                                <span class="proto-icon">🎯</span>
+                                <span class="proto-name">Focus Mode</span>
                             </button>
                             <button class="protocol-btn" data-protocol="stealth">
-                                <span class="proto-icon">👁</span>
-                                <span class="proto-name">Stealth Mode</span>
+                                <span class="proto-icon">🌙</span>
+                                <span class="proto-name">Night Mode</span>
                             </button>
                             <button class="protocol-btn" data-protocol="diagnostic">
-                                <span class="proto-icon">🛡</span>
+                                <span class="proto-icon">🛡️</span>
                                 <span class="proto-name">Diagnostics</span>
                             </button>
-                            <button class="protocol-btn" data-protocol="red-alert">
-                                <span class="proto-icon">🚨</span>
-                                <span class="proto-name">Red Alert</span>
+                            <button class="protocol-btn" data-protocol="voice-loop">
+                                <span class="proto-icon">🎙️</span>
+                                <span class="proto-name">Voice Mode</span>
                             </button>
                         </div>
                     </div>
@@ -142,7 +142,7 @@
                         <h3 class="sub-heading">VOICE COMMANDS</h3>
                         <ul class="command-list">
                             <li><span class="cmd-pill">"What's the weather"</span> Live weather report</li>
-                            <li><span class="cmd-pill">"Tell me a joke"</span> Stark AI humor</li>
+                            <li><span class="cmd-pill">"Tell me a joke"</span> AI programmer humor</li>
                             <li><span class="cmd-pill">"Add task: [action]"</span> Logs personal directive</li>
                             <li><span class="cmd-pill">"System status"</span> Deep hardware scan</li>
                             <li><span class="cmd-pill">"Theme [cyan/gold/emerald]"</span> Shift HUD armor</li>
@@ -197,7 +197,7 @@
                     <!-- Voice Agent State Banner -->
                     <div class="agent-state-display" id="agentStateBanner">
                         <span class="agent-mode-tag">STANDBY</span>
-                        <span class="agent-mode-desc">Awaiting your instruction, Sir.</span>
+                        <span class="agent-mode-desc" id="agentModeDesc">Awaiting your instruction, Harsh.</span>
                     </div>
                 </div>
 
@@ -207,8 +207,8 @@
                         <div class="msg-avatar">J</div>
                         <div class="msg-content">
                             <div class="msg-sender">J.A.R.V.I.S. <span class="msg-time">ONLINE</span></div>
-                            <div class="msg-body">
-                                Good day, Sir. All micro-thrusters, neural processors, and sensory telemetry are online and running at peak performance. How may I be of service today?
+                            <div class="msg-body" id="initialGreetingBody">
+                                Good day, Harsh. All sensors, neural processors, and telemetry monitors are calibrated to your system. Real-time atmospheric and hardware telemetry are actively synchronizing. How may I assist you today?
                             </div>
                         </div>
                     </div>
@@ -267,8 +267,8 @@
                                 <span class="weather-temp" id="weatherTemp">24°C</span>
                             </div>
                             <div class="weather-meta">
-                                <div class="weather-loc" id="weatherLoc">MALIBU POINT, CA</div>
-                                <div class="weather-desc" id="weatherDesc">Skies clear. Optimal flight conditions.</div>
+                                <div class="weather-loc" id="weatherLoc">DETECTING REAL LOCATION...</div>
+                                <div class="weather-desc" id="weatherDesc">Scanning live atmospheric sensors...</div>
                             </div>
                         </div>
                     </div>
@@ -296,7 +296,7 @@
                             <span class="sub-heading">TACTICAL SCRATCHPAD</span>
                             <button id="btnSaveNotes" class="mini-btn">SAVE</button>
                         </div>
-                        <textarea id="notesArea" class="hud-textarea" placeholder="Classified notes, project parameters, coordinates..."></textarea>
+                        <textarea id="notesArea" class="hud-textarea" placeholder="Daily notes, quick thoughts, project parameters, clipboard snippets..."></textarea>
                     </div>
 
                     <!-- System Audio Logs -->
@@ -318,15 +318,15 @@
         <!-- Bottom Status Bar -->
         <footer class="hud-footer">
             <div class="footer-left">
-                <span class="hud-tag">SECURITY CLEARANCE: LEVEL 10</span>
-                <span class="hud-tag">USER: TONY STARK</span>
+                <span class="hud-tag">PLATFORM: <span id="footerPlatform">WIN32</span></span>
+                <span class="hud-tag">USER: <span id="footerUser">HARSH</span></span>
             </div>
             <div class="footer-center">
                 <span id="speechFeedbackText" class="speech-live-caption">Vocal telemetry standing by...</span>
             </div>
             <div class="footer-right">
-                <span class="hud-tag">LATENCY: <span id="networkPing">12ms</span></span>
-                <span class="hud-tag">ARC OUTPUT: 3.2 GJ/s</span>
+                <span class="hud-tag">REAL PING: <span id="networkPing">MEASURING...</span></span>
+                <span class="hud-tag">CORES: <span id="footerCores">DETECTING...</span></span>
             </div>
         </footer>
     </div>
@@ -347,8 +347,8 @@
 
             <div class="modal-body">
                 <div class="setting-group">
-                    <label class="setting-label" for="userNameInput">User Codename</label>
-                    <input type="text" id="userNameInput" class="setting-input" value="Sir" placeholder="e.g. Sir, Tony, Commander">
+                    <label class="setting-label" for="userNameInput">User Name</label>
+                    <input type="text" id="userNameInput" class="setting-input" value="Harsh" placeholder="e.g. Harsh">
                     <small class="setting-hint">Jarvis will address you by this name.</small>
                 </div>
 
@@ -375,7 +375,7 @@
                         <option value="groq">Groq Cloud (Ultra-Fast LPU Inference — OpenAI Compatible API)</option>
                         <option value="openai">OpenAI Official Core (GPT-4o / GPT-4o-Mini)</option>
                         <option value="gemini">Google Gemini 1.5 Flash Core</option>
-                        <option value="builtin">Built-in Stark Autonomous Engine (Instant Offline)</option>
+                        <option value="builtin">Built-in Offline Autonomous Engine (Instant Offline)</option>
                     </select>
                     <small class="setting-hint" id="providerHint">Recommended: Groq for sub-second vocal response speed, or OpenAI for official GPT-4o models.</small>
                 </div>
