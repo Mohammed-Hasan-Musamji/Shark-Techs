@@ -566,6 +566,40 @@ User Objective: "${userGoal}"`;
             };
         }
 
+        // Pattern D: Native App & Messaging Dispatch (WhatsApp, Notepad, etc.)
+        if (q.includes('whatsapp') || q.includes('notepad') || (q.includes('notes') && q.includes('write')) || q.includes('calc') || q.includes('vscode')) {
+            const steps = [];
+            if (q.includes('whatsapp') || q.includes('message')) {
+                const waMatch = userGoal.match(/(?:message|text|send|ping)\s+([A-Za-z0-9+]+)\s*(?:saying\s+|that\s+|:|says?\s+)?\s*(.*)/i);
+                const recipient = waMatch ? waMatch[1] : 'Hasan';
+                const message = waMatch && waMatch[2] ? waMatch[2] : 'hi';
+                steps.push({
+                    id: 1,
+                    tool: 'device_app_launch',
+                    app: 'WhatsApp Messenger',
+                    description: `Launch WhatsApp and prepare message for ${recipient}`,
+                    params: { app: 'whatsapp', contact: recipient, text: message }
+                });
+            }
+            if (q.includes('notepad') || q.includes('notes')) {
+                const noteMatch = userGoal.match(/(?:write|type|note|record|put)\s*(?:down|\s+this)?(?:\s*:|\s+that|\s+about)?\s*(.*)/i);
+                const noteText = noteMatch && noteMatch[1] ? noteMatch[1] : 'Automated workflow note';
+                steps.push({
+                    id: steps.length + 1,
+                    tool: 'device_app_launch',
+                    app: 'Desktop Notepad',
+                    description: `Open Notepad workspace and insert text: "${noteText.slice(0, 30)}"`,
+                    params: { app: 'notepad', text: noteText }
+                });
+            }
+            if (steps.length > 0) {
+                return {
+                    goal: `Automated Device Execution: "${userGoal.slice(0, 40)}"`,
+                    steps: steps
+                };
+            }
+        }
+
         // Default: 2-step general workflow
         return {
             goal: `Execute Multi-Step Task: "${userGoal.slice(0, 40)}"`,

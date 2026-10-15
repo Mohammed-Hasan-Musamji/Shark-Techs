@@ -364,26 +364,29 @@ You have direct access to this real live telemetry. If ${this.userName} asks abo
         }
 
         // --------------------------------------------------------------------------
-        // DEVICE APPS LAUNCHER (WhatsApp, Notepad, Calculator, VS Code, Spotify, etc.)
+        // CONTACT MANAGEMENT & DEVICE APPS LAUNCHER
         // --------------------------------------------------------------------------
         if (window.jarvisDevice) {
-            // WhatsApp
-            if (q.includes('whatsapp') || q.includes('whats app')) {
-                let msg = '';
-                let phone = '';
-                if (q.includes('message') || q.includes('send') || q.includes('write')) {
-                    msg = query.replace(/^.*(whatsapp|whats app)(:|\s+to|\s+send|\s+message)?/i, '').trim();
-                }
-                return window.jarvisDevice.openWhatsApp(msg, phone);
+            // Save / Set Contact phone number
+            const contactMatch = query.match(/(?:save|set|update|remember)\s+contact\s+([A-Za-z0-9_]+)\s*(?:phone|number|as|to|:)?\s*(\+?\d[\d\s-]{7,15}\d)/i) ||
+                                 query.match(/([A-Za-z0-9_]+)(?:'s)?\s*(?:phone|number|whatsapp)\s*(?:is|=|to)\s*(\+?\d[\d\s-]{7,15}\d)/i);
+            if (contactMatch) {
+                const name = contactMatch[1];
+                const phone = contactMatch[2].replace(/[\s-]/g, '');
+                window.jarvisDevice.saveContact(name, phone);
+                return `I have cataloged ${name}'s contact number as ${phone}, ${this.userName}. Direct WhatsApp uplink configured.`;
             }
 
-            // Notepad
-            if (q.includes('notepad') || q.includes('open notes') || q.includes('text editor')) {
-                let noteContent = '';
-                if (q.includes('write') || q.includes('take a note') || q.includes('record')) {
-                    noteContent = query.replace(/^.*(notepad|open notes|text editor)(:|\s+and write|\s+write)?/i, '').trim();
-                }
-                return window.jarvisDevice.openNotepad(noteContent);
+            // WhatsApp: message contacts, prefilled texts, and web/desktop launcher
+            const waIntent = this.parseWhatsAppIntent(query);
+            if (waIntent) {
+                return window.jarvisDevice.openWhatsApp(waIntent.message, waIntent.phone, waIntent.contact);
+            }
+
+            // Notepad: open workspace, prefill text, and launch native Notepad
+            const notepadIntent = this.parseNotepadIntent(query);
+            if (notepadIntent) {
+                return window.jarvisDevice.openNotepad(notepadIntent.text);
             }
 
             // Calculator
@@ -437,6 +440,91 @@ You have direct access to this real live telemetry. If ${this.userName} asks abo
         }
 
         return null;
+    }
+
+    /**
+     * Parses WhatsApp requests into contact, message, and direct phone parameters
+     */
+    parseWhatsAppIntent(query) {
+        const q = query.toLowerCase().trim();
+        const hasWA = q.includes('whatsapp') || q.includes('whats app');
+        const isMsgCommand = q.startsWith('message ') || q.startsWith('text ') || q.startsWith('send message') || q.startsWith('send a message') || q.startsWith('ping ');
+
+        if (!hasWA && !isMsgCommand) {
+            return null;
+        }
+
+        let contact = '';
+        let message = '';
+        let phone = '';
+
+        // Extract direct phone numbers if present
+        const phoneMatch = query.match(/(\+?\d[\d\s-]{8,15}\d)/);
+        if (phoneMatch) {
+            phone = phoneMatch[1].replace(/[\s-]/g, '');
+        }
+
+        let clean = query
+            .replace(/^(please\s+|can you\s+|jarvis\s+|i want you to\s+|i want to ask you to\s+|do task like\s+)+/i, '')
+            .trim();
+
+        // 1. "open whatsapp and (message|send|text) <contact> [saying|:] <msg>"
+        // e.g. "open whatsapp and message hasan hi"
+        let m1 = clean.match(/(?:open\s+(?:whatsapp|whats app)\s+(?:and\s+|to\s+))?(?:message|send(?:\s+a\s+message)?(?:\s+to)?|text|ping)\s+([A-Za-z0-9+]+)\s*(?:saying\s+|that\s+|:|says?\s+)?\s*(.*)/i);
+        if (m1 && hasWA) {
+            contact = m1[1].trim();
+            message = m1[2].replace(/(?:\s+on\s+whatsapp|\s+via\s+whatsapp)$/i, '').trim();
+        } else if (clean.match(/^whatsapp\s+([A-Za-z0-9+]+)\s*(?:saying\s+|that\s+|:|says?\s+)?\s*(.*)/i)) {
+            // 2. "whatsapp hasan hi"
+            let m2 = clean.match(/^whatsapp\s+([A-Za-z0-9+]+)\s*(?:saying\s+|that\s+|:|says?\s+)?\s*(.*)/i);
+            contact = m2[1].trim();
+            message = m2[2].trim();
+        } else if (clean.match(/(?:message|send(?:\s+to)?|text)\s+([A-Za-z0-9+]+)\s+(?:saying\s+|that\s+|:)?(.*)\s+on\s+whatsapp/i)) {
+            // 3. "message hasan hi on whatsapp"
+            let m3 = clean.match(/(?:message|send(?:\s+to)?|text)\s+([A-Za-z0-9+]+)\s+(?:saying\s+|that\s+|:)?(.*)\s+on\s+whatsapp/i);
+            contact = m3[1].trim();
+            message = m3[2].trim();
+        } else if (hasWA) {
+            // 4. "open whatsapp" or general query
+            message = clean.replace(/^.*(whatsapp|whats app)(:|\s+to|\s+send|\s+message)?/i, '').trim();
+        }
+
+        if (/^\+?\d+$/.test(contact)) {
+            phone = contact;
+            contact = '';
+        }
+
+        return { contact, message, phone };
+    }
+
+    /**
+     * Parses Notepad requests into initial text payload
+     */
+    parseNotepadIntent(query) {
+        const q = query.toLowerCase().trim();
+        if (!q.includes('notepad') && !q.includes('open notes') && !q.includes('text editor')) {
+            return null;
+        }
+
+        let clean = query
+            .replace(/^(please\s+|can you\s+|jarvis\s+|i want you to\s+|i want to ask you to\s+|do task like\s+)+/i, '')
+            .trim();
+
+        let text = '';
+        // Pattern 1: write/type <text> in/on/into notepad/notes
+        let m1 = clean.match(/(?:write|type|record|note|put|save)\s+(.+?)\s+(?:in|on|into)\s+(?:notepad|notes|text\s+editor)/i);
+        if (m1) {
+            text = m1[1].trim();
+        } else {
+            // Pattern 2: open notepad and write/type/record/put <text>
+            let m2 = clean.match(/(?:open\s+(?:notepad|notes)|notepad|text\s+editor)\s*(?:and\s+|to\s+)?(?:write|type|note|record|put|log)?(?:\s+down|\s+this)?(?:\s*:|\s+that|\s+about)?\s*(.*)/i);
+            if (m2 && m2[1]) {
+                text = m2[1].trim();
+                text = text.replace(/^(?:and\s+write|write|and\s+type|type|take\s+a\s+note|record|put)\s*/i, '').trim();
+            }
+        }
+
+        return { text };
     }
 
     /**

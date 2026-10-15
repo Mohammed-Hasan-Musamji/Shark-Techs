@@ -71,9 +71,12 @@
 ## 🚀 Getting Started
 
 ### 1. Launching Locally
-The server is currently running on port `9000`:
+You can run the zero-dependency host bridge server on port `9000`:
 ```bash
-# Open in your browser
+node server.js
+```
+Then open in your browser:
+```text
 http://localhost:9000
 ```
 
@@ -84,16 +87,19 @@ You can click the **Arc Reactor** or the **Microphone** button and speak any of 
 
 | Voice Command | Action / Response |
 | :--- | :--- |
+| *"Open WhatsApp and message Hasan hi"* | Opens WhatsApp with recipient Hasan and message "hi" prefilled |
+| *"Open Notepad and write [something]"* | Launches Desktop Notepad and writes/saves your text note |
+| *"Save contact Hasan [phone number]"* | Saves phone number for instant 1-tap direct messaging |
+| *"Open Calculator"* / *"Calculate [expression]"* | Launches Windows Calculator & solves arithmetic computations |
 | *"What's the weather?"* | Fetches live temperature and conditions for your detected city |
 | *"System status"* | Runs real diagnostics on CPU cores, latency, battery, and uptime |
 | *"Add task: [directive]"* | Stores a new directive into active mission objectives |
 | *"Show directives"* | Summarizes pending objectives |
 | *"Save note: [notes]"* | Appends timestamped note to the scratchpad |
+| *"Plan my day"* / *"Workflow: [goal]"* | Executes multi-step autonomous cross-app workflow |
 | *"Activate protocol [focus/night/diagnostic/voice]"* | Engages system mode sweeps and visual cues |
 | *"Switch theme to [gold/cyan/emerald/violet]"* | Recalibrates HUD armor color matrix |
-| *"Calculate [math expression]"* | Solves arithmetic computations on the fly |
 | *"Search Google for [query]"* | Launches web search in a new tab |
-| *"Who are you?"* / *"Tell me a joke"* | AI persona and programming humor |
 
 ---
 

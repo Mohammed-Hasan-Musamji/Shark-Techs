@@ -58,6 +58,76 @@ class JarvisDeviceController {
     }
 
     /**
+     * System Control Bridge Uplink: Communicates with local host server if running (port 9000)
+     */
+    async callBridge(endpoint, data) {
+        const baseUrls = [
+            window.location.origin,
+            'http://localhost:9000',
+            'http://127.0.0.1:9000'
+        ];
+        for (const base of baseUrls) {
+            try {
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 1200);
+                const res = await fetch(`${base}${endpoint}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data),
+                    signal: controller.signal
+                });
+                clearTimeout(timeoutId);
+                if (res.ok) {
+                    const result = await res.json();
+                    if (result && result.success) return result;
+                }
+            } catch (e) {
+                // Ignore and proceed to fallback
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Contact Directory Management
+     */
+    getContacts() {
+        try {
+            const raw = localStorage.getItem('jarvis_contacts');
+            if (raw) return JSON.parse(raw);
+        } catch (e) {}
+        return {
+            'hasan': { name: 'Hasan', phone: '' }
+        };
+    }
+
+    saveContact(name, phone) {
+        if (!name) return false;
+        const contacts = this.getContacts();
+        const key = name.toLowerCase().trim();
+        const cleanPhone = (phone || '').replace(/[^0-9+]/g, '');
+        contacts[key] = {
+            name: name.trim(),
+            phone: cleanPhone
+        };
+        try {
+            localStorage.setItem('jarvis_contacts', JSON.stringify(contacts));
+        } catch (e) {}
+        return contacts[key];
+    }
+
+    lookupContact(name) {
+        if (!name) return null;
+        const contacts = this.getContacts();
+        const key = name.toLowerCase().trim();
+        if (contacts[key]) return contacts[key];
+        for (const k of Object.keys(contacts)) {
+            if (k.includes(key) || key.includes(k)) return contacts[k];
+        }
+        return null;
+    }
+
+    /**
      * Master Launcher: Opens apps with protocol fallbacks and smooth execution
      */
     launchApp(appName, params = {}) {
@@ -66,7 +136,7 @@ class JarvisDeviceController {
 
         switch (app) {
             case 'whatsapp':
-                return this.openWhatsApp(params.text || params.message || '', params.phone);
+                return this.openWhatsApp(params.text || params.message || '', params.phone, params.contact || params.recipient);
 
             case 'notepad':
                 return this.openNotepad(params.text || params.content || '');
@@ -112,26 +182,63 @@ class JarvisDeviceController {
     /* --------------------------------------------------------------------------
        1. WHATSAPP LAUNCHER
        -------------------------------------------------------------------------- */
-    openWhatsApp(message = '', phone = '') {
+    openWhatsApp(message = '', phone = '', recipientName = '') {
+        let targetPhone = phone;
+        let displayName = recipientName;
+
+        // Check contact directory if recipient is provided without direct phone
+        if (recipientName && !targetPhone) {
+            const found = this.lookupContact(recipientName);
+            if (found && found.phone) {
+                targetPhone = found.phone;
+                displayName = found.name || recipientName;
+            }
+        }
+
+        const cleanPhone = (targetPhone || '').replace(/[^0-9]/g, '');
         const encodedMsg = encodeURIComponent(message);
         let appUri = `whatsapp://send?text=${encodedMsg}`;
         let webUrl = `https://web.whatsapp.com/send?text=${encodedMsg}`;
 
-        if (phone) {
-            const cleanPhone = phone.replace(/[^0-9]/g, '');
+        if (cleanPhone) {
             appUri = `whatsapp://send?phone=${cleanPhone}&text=${encodedMsg}`;
             webUrl = `https://web.whatsapp.com/send?phone=${cleanPhone}&text=${encodedMsg}`;
+        } else if (!message) {
+            appUri = 'whatsapp://';
+            webUrl = 'https://web.whatsapp.com';
         }
 
-        // Smooth launch: try native app URI with prompt fallback to WhatsApp Web
+        // Try host PC bridge first (if Node.js server is online)
+        this.callBridge('/api/system/open-app', {
+            app: 'whatsapp',
+            text: message,
+            phone: cleanPhone
+        }).then(bridgeRes => {
+            if (bridgeRes && window.jarvisAgent) {
+                window.jarvisAgent.appendTelemetryLog(`[BRIDGE] WhatsApp dispatched via host bridge.`);
+            }
+        });
+
+        // Trigger native desktop protocol with prompt web fallback
         this.launchProtocolWithFallback(appUri, webUrl, 'WhatsApp');
 
-        const logMsg = message 
-            ? `Launching WhatsApp with prefilled message: "${message.slice(0, 35)}..."` 
-            : 'Launching WhatsApp application.';
+        const userName = window.jarvisApp?.getUserName() || 'Harsh';
+        let feedback = '';
 
-        if (window.jarvisAgent) window.jarvisAgent.appendTelemetryLog(`[APP LAUNCH] ${logMsg}`);
-        return `Opening WhatsApp smoothly, ${window.jarvisApp?.getUserName() || 'Harsh'}. Direct message link prepared.`;
+        if (displayName) {
+            if (cleanPhone) {
+                feedback = `Opening WhatsApp chat with ${displayName} to send: "${message || 'hi'}", ${userName}.`;
+            } else {
+                feedback = `Opening WhatsApp with message "${message || 'hi'}" prepared for ${displayName}, ${userName}. Select ${displayName} to send. (Tip: say "save contact ${displayName} [phone]" to link directly!)`;
+            }
+        } else if (message) {
+            feedback = `Opening WhatsApp with message: "${message.slice(0, 40)}...", ${userName}.`;
+        } else {
+            feedback = `Opening WhatsApp application for you now, ${userName}.`;
+        }
+
+        if (window.jarvisAgent) window.jarvisAgent.appendTelemetryLog(`[APP LAUNCH] ${feedback}`);
+        return feedback;
     }
 
     /* --------------------------------------------------------------------------
@@ -141,6 +248,17 @@ class JarvisDeviceController {
         const modal = document.getElementById('notepadModal');
         const area = document.getElementById('desktopNotepadTextarea');
 
+        // 1. If PC Bridge is running, tell bridge to launch native Windows Notepad with this text
+        this.callBridge('/api/system/open-app', {
+            app: 'notepad',
+            text: initialText
+        }).then(bridgeRes => {
+            if (bridgeRes && window.jarvisAgent) {
+                window.jarvisAgent.appendTelemetryLog(`[BRIDGE] Native Windows Notepad launched with text.`);
+            }
+        });
+
+        // 2. Open Desktop Notepad workspace inside the HUD
         if (modal && area) {
             if (initialText) {
                 if (area.value) {
@@ -159,15 +277,25 @@ class JarvisDeviceController {
             }, 100);
         }
 
-        // Also offer instant .txt export for native Windows Notepad
+        // 3. Auto-copy text to clipboard for instant pasting anywhere
+        if (initialText && navigator.clipboard) {
+            navigator.clipboard.writeText(initialText).catch(() => {});
+        }
+
+        // 4. Also trigger instant .txt download for native Windows Notepad
         if (initialText) {
             this.promptNativeNotepadOpen(initialText);
         }
 
+        const userName = window.jarvisApp?.getUserName() || 'Harsh';
+        const feedback = initialText 
+            ? `Opening Notepad workspace with your text: "${initialText.slice(0, 35)}...", ${userName}.`
+            : `Opening Desktop Notepad workspace for you now, ${userName}.`;
+
         if (window.jarvisAgent) {
-            window.jarvisAgent.appendTelemetryLog(`[APP LAUNCH] Desktop Notepad workspace opened.`);
+            window.jarvisAgent.appendTelemetryLog(`[APP LAUNCH] Desktop Notepad workspace active.`);
         }
-        return `Opening Desktop Notepad workspace for you now, ${window.jarvisApp?.getUserName() || 'Harsh'}.`;
+        return feedback;
     }
 
     closeNotepad() {
