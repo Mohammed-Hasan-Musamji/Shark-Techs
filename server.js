@@ -1,7 +1,7 @@
 /**
  * ============================================================================
- * J.A.R.V.I.S. SYSTEM BRIDGE, MONGODB HISTORY & MULTI-DEVICE SERVER
- * Host System Automation, Active Window Desktop Control, Mobile QR Uplink & MongoDB
+ * J.A.R.V.I.S. ZERO-DEPENDENCY SYSTEM BRIDGE & HOST SERVER
+ * Node.js Host Agent, System Automation, Computer Controls, MongoDB & Mobile QR
  * ============================================================================
  */
 
@@ -9,51 +9,64 @@ const http = require('http');
 const fs = require('fs');
 const path = require('path');
 const os = require('os');
-const { exec, spawn } = require('child_process');
+const { spawn, exec } = require('child_process');
 
-let MongoClient = null;
-try {
-    MongoClient = require('mongodb').MongoClient;
-} catch (e) {
-    console.warn('MongoDB client module not installed, using fallback file storage.');
+// Load environment variables from .env
+const ENV_FILE = path.join(__dirname, '.env');
+if (fs.existsSync(ENV_FILE)) {
+    const envLines = fs.readFileSync(ENV_FILE, 'utf8').split(/\r?\n/);
+    for (const line of envLines) {
+        const trimmed = line.trim();
+        if (trimmed && !trimmed.startsWith('#') && trimmed.includes('=')) {
+            const idx = trimmed.indexOf('=');
+            const key = trimmed.slice(0, idx).trim();
+            const val = trimmed.slice(idx + 1).trim().replace(/^["']|["']$/g, '');
+            if (!process.env[key]) {
+                process.env[key] = val;
+            }
+        }
+    }
 }
 
-const PORT = process.env.PORT || 9000;
+const PORT = parseInt(process.env.PORT || '9000', 10);
 const ROOT_DIR = __dirname;
-const DATA_DIR = path.join(ROOT_DIR, 'data');
-const HISTORY_FILE = path.join(DATA_DIR, 'history.json');
-
-// Ensure data folder exists
+const DATA_DIR = path.join(__dirname, 'data');
 if (!fs.existsSync(DATA_DIR)) {
     try { fs.mkdirSync(DATA_DIR, { recursive: true }); } catch (e) {}
 }
 
-// Global tunnel state
+const HISTORY_FILE = path.join(DATA_DIR, 'history.json');
+const MONGO_URI = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017';
+const MONGO_DB_NAME = process.env.MONGODB_DB || 'jarvis_hud';
+
+let isMongoConnected = false;
+let mongoDb = null;
+let mongoClient = null;
+
+// Connect to MongoDB with graceful fallback
+(async function initMongo() {
+    try {
+        const { MongoClient } = require('mongodb');
+        mongoClient = new MongoClient(MONGO_URI, {
+            serverSelectionTimeoutMS: 2000,
+            connectTimeoutMS: 2000
+        });
+        await mongoClient.connect();
+        mongoDb = mongoClient.db(MONGO_DB_NAME);
+        isMongoConnected = true;
+        console.log(`  > MongoDB Connected: ${MONGO_URI}/${MONGO_DB_NAME}`);
+    } catch (e) {
+        isMongoConnected = false;
+        console.log(`  > MongoDB Notice: Using local resilient file cache (${e.message})`);
+    }
+})();
+
 let activeTunnelProcess = null;
 let activeTunnelUrl = null;
 
-// MongoDB Connection State
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/jarvis_hud';
-let mongoClientInstance = null;
-let mongoDb = null;
-let isMongoConnected = false;
-
-async function initMongoDB() {
-    if (!MongoClient) return;
-    try {
-        mongoClientInstance = new MongoClient(MONGODB_URI, { serverSelectionTimeoutMS: 2000 });
-        await mongoClientInstance.connect();
-        mongoDb = mongoClientInstance.db();
-        isMongoConnected = true;
-        console.log(`  > MongoDB Connected: ${MONGODB_URI}`);
-    } catch (err) {
-        isMongoConnected = false;
-        console.log(`  > MongoDB Not Connected: Using local JSON persistence (${HISTORY_FILE})`);
-    }
-}
-initMongoDB();
-
-// MIME Types
+/**
+ * MIME Types for static file serving
+ */
 const MIME_TYPES = {
     '.html': 'text/html; charset=utf-8',
     '.css': 'text/css; charset=utf-8',
@@ -62,59 +75,61 @@ const MIME_TYPES = {
     '.png': 'image/png',
     '.jpg': 'image/jpeg',
     '.jpeg': 'image/jpeg',
+    '.gif': 'image/gif',
     '.svg': 'image/svg+xml',
     '.ico': 'image/x-icon',
-    '.env': 'text/plain; charset=utf-8',
+    '.mp3': 'audio/mpeg',
+    '.wav': 'audio/wav',
+    '.webmanifest': 'application/manifest+json',
     '.txt': 'text/plain; charset=utf-8',
     '.md': 'text/markdown; charset=utf-8'
 };
 
 /**
- * Detect local IPv4 addresses (Wi-Fi / Ethernet)
+ * Discover network interfaces (IPv4)
  */
 function getLocalNetworkAddresses() {
     const interfaces = os.networkInterfaces();
     const addresses = [];
-    let primaryIp = '127.0.0.1';
 
     for (const name of Object.keys(interfaces)) {
         for (const iface of interfaces[name]) {
             if (iface.family === 'IPv4' && !iface.internal) {
-                addresses.push({
-                    name,
-                    ip: iface.address,
-                    mac: iface.mac
-                });
-                if (name.toLowerCase().includes('wi-fi') || name.toLowerCase().includes('wireless') || name.toLowerCase().includes('eth')) {
-                    primaryIp = iface.address;
-                } else if (primaryIp === '127.0.0.1') {
-                    primaryIp = iface.address;
-                }
+                addresses.push({ interface: name, ip: iface.address });
             }
         }
     }
-    return { primaryIp, addresses };
+
+    const wifiOrEth = addresses.find(a =>
+        a.interface.toLowerCase().includes('wi-fi') ||
+        a.interface.toLowerCase().includes('wifi') ||
+        a.interface.toLowerCase().includes('eth') ||
+        a.interface.toLowerCase().includes('local')
+    );
+
+    return {
+        primaryIp: (wifiOrEth || addresses[0] || { ip: '127.0.0.1' }).ip,
+        addresses
+    };
 }
 
 /**
- * Real OS CPU load calculation
+ * Measure CPU Load over brief sampling window
  */
 function getCpuLoad(callback) {
-    const cpusBefore = os.cpus();
+    const cpus1 = os.cpus();
     setTimeout(() => {
-        const cpusAfter = os.cpus();
-        let idleDiff = 0;
+        const cpus2 = os.cpus();
         let totalDiff = 0;
+        let idleDiff = 0;
 
-        for (let i = 0; i < cpusBefore.length; i++) {
-            const b = cpusBefore[i].times;
-            const a = cpusAfter[i].times;
-
-            const bTotal = b.user + b.nice + b.sys + b.idle + b.irq;
-            const aTotal = a.user + a.nice + a.sys + a.idle + a.irq;
-
-            idleDiff += (a.idle - b.idle);
-            totalDiff += (aTotal - bTotal);
+        for (let i = 0; i < cpus1.length; i++) {
+            const t1 = cpus1[i].times;
+            const t2 = cpus2[i].times;
+            const total1 = t1.user + t1.nice + t1.sys + t1.idle + t1.irq;
+            const total2 = t2.user + t2.nice + t2.sys + t2.idle + t2.irq;
+            totalDiff += (total2 - total1);
+            idleDiff += (t2.idle - t1.idle);
         }
 
         const load = totalDiff > 0 ? ((1 - (idleDiff / totalDiff)) * 100) : 5.0;
@@ -123,7 +138,7 @@ function getCpuLoad(callback) {
 }
 
 /**
- * Execute PowerShell command safely
+ * Execute PowerShell script safely using EncodedCommand (UTF-16LE base64)
  */
 function runPowerShell(script) {
     return new Promise((resolve) => {
@@ -153,26 +168,56 @@ function runPowerShell(script) {
 }
 
 /**
- * Launch an interactive GUI application or open a URL in the user's active desktop session
+ * Rock-solid desktop application and URL launcher for Windows
+ * Resolves URI protocols, executables with arguments, Store apps, and URLs cleanly
  */
-function launchAppOrUrl(target) {
+function launchAppOrUrl(target, args = '') {
     return new Promise((resolve) => {
-        try {
-            const child = spawn('cmd.exe', ['/c', 'start', '', target], {
-                detached: true,
-                stdio: 'ignore',
-                windowsHide: false
-            });
-            child.unref();
-            resolve({ success: true, command: target, output: 'Launched interactive window.' });
-        } catch (err) {
-            runPowerShell(`Start-Process "${target}"`).then(resolve);
+        const cleanTarget = (target || '').trim();
+        const isUrl = /^https?:\/\//i.test(cleanTarget);
+        const isProtocol = /^[a-z0-9-]+:($|\/\/)/i.test(cleanTarget);
+
+        let psScript;
+        if (isUrl || isProtocol) {
+            psScript = `Start-Process '${cleanTarget.replace(/'/g, "''")}'`;
+        } else if (args) {
+            psScript = `Start-Process '${cleanTarget.replace(/'/g, "''")}' -ArgumentList '${args.replace(/'/g, "''")}'`;
+        } else {
+            psScript = `Start-Process '${cleanTarget.replace(/'/g, "''")}'`;
         }
+
+        runPowerShell(psScript).then((res) => {
+            if (res.success) {
+                resolve({ success: true, command: cleanTarget, output: 'Interactive process launched in foreground.' });
+            } else {
+                // Fallback to cmd.exe /c start with properly quoted title and executable
+                try {
+                    let cmdCommand;
+                    if (isUrl || isProtocol) {
+                        cmdCommand = `start "" "${cleanTarget}"`;
+                    } else if (args) {
+                        cmdCommand = `start "" "${cleanTarget}" "${args}"`;
+                    } else {
+                        cmdCommand = `start "" "${cleanTarget}"`;
+                    }
+
+                    const child = spawn('cmd.exe', ['/c', cmdCommand], {
+                        detached: true,
+                        stdio: 'ignore',
+                        windowsHide: false
+                    });
+                    child.unref();
+                    resolve({ success: true, command: cleanTarget, output: 'Launched via secondary shell subsystem.' });
+                } catch (cmdErr) {
+                    resolve({ success: false, error: res.stderr || cmdErr.message });
+                }
+            }
+        });
     });
 }
 
 /**
- * MongoDB & File History Helpers
+ * MongoDB & Resilient Local File History Storage
  */
 async function getHistoryMessages(limit = 100) {
     if (isMongoConnected && mongoDb) {
@@ -324,7 +369,7 @@ async function handleApiRequest(req, res, pathname) {
         return;
     }
 
-    // 3. POST /api/system/open-app (with writing/text support)
+    // 3. POST /api/system/open-app (Direct application launcher & dictation writing)
     if (pathname === '/api/system/open-app' && req.method === 'POST') {
         const data = await readBody();
         const app = (data.app || '').toLowerCase().trim();
@@ -335,37 +380,39 @@ async function handleApiRequest(req, res, pathname) {
             return;
         }
 
-        // Dictation note writing to Notepad
+        // Notepad dictation text writing
         if ((app === 'notepad' || app === 'notes') && data.text) {
             const noteFile = path.join(DATA_DIR, 'jarvis_note.txt');
             const stamp = new Date().toLocaleString();
             const noteContent = `=== J.A.R.V.I.S. DICTATED NOTE [${stamp}] ===\r\n\r\n${data.text}\r\n`;
             fs.writeFileSync(noteFile, noteContent, 'utf8');
 
-            const result = await launchAppOrUrl(`notepad.exe "${noteFile}"`);
+            const result = await launchAppOrUrl('notepad.exe', noteFile);
             res.writeHead(200);
             res.end(JSON.stringify({
                 success: result.success,
                 app: 'notepad',
                 text: data.text,
                 file: noteFile,
-                message: `Notepad opened with note: "${data.text}"`
+                message: `Notepad launched with note: "${data.text}"`
             }));
             return;
         }
 
+        // Mapping shortcuts to Windows applications, UWP Store protocol URIs and URLs
         const appMap = {
             'notepad': 'notepad.exe',
             'notes': 'notepad.exe',
             'calc': 'calc.exe',
             'calculator': 'calc.exe',
-            'spotify': 'spotify.exe',
+            'spotify': data.query ? `spotify:search:${encodeURIComponent(data.query)}` : 'spotify:',
             'chrome': 'chrome.exe',
             'google chrome': 'chrome.exe',
-            'browser': 'start chrome.exe',
-            'code': 'code',
-            'vscode': 'code',
-            'vs code': 'code',
+            'browser': 'https://google.com',
+            'code': 'vscode:',
+            'vscode': 'vscode:',
+            'vs code': 'vscode:',
+            'visual studio code': 'vscode:',
             'explorer': 'explorer.exe',
             'files': 'explorer.exe',
             'file explorer': 'explorer.exe',
@@ -374,9 +421,9 @@ async function handleApiRequest(req, res, pathname) {
             'cmd': 'cmd.exe',
             'powershell': 'powershell.exe',
             'terminal': 'wt.exe',
-            'settings': 'start ms-settings:',
+            'settings': 'ms-settings:',
             'paint': 'mspaint.exe',
-            'whatsapp': 'https://web.whatsapp.com',
+            'whatsapp': 'whatsapp:',
             'whatsapp web': 'https://web.whatsapp.com',
             'web whatsapp': 'https://web.whatsapp.com',
             'youtube': 'https://youtube.com',
@@ -386,14 +433,27 @@ async function handleApiRequest(req, res, pathname) {
         };
 
         const target = appMap[app] || app;
-        const result = await launchAppOrUrl(target);
+        let result = await launchAppOrUrl(target);
+
+        // Fallbacks for Store apps if native protocol is not installed
+        if (!result.success) {
+            if (app === 'whatsapp') {
+                result = await launchAppOrUrl('https://web.whatsapp.com');
+            } else if (app === 'spotify') {
+                result = await launchAppOrUrl('https://open.spotify.com');
+            } else if (app === 'code' || app === 'vscode' || app === 'vs code') {
+                result = await launchAppOrUrl('code.cmd');
+            } else if (app === 'terminal') {
+                result = await launchAppOrUrl('powershell.exe');
+            }
+        }
 
         res.writeHead(200);
         res.end(JSON.stringify({
             success: result.success,
             app,
             command: target,
-            output: result.output || result.stderr || 'Application launch signal transmitted.'
+            output: result.output || result.error || 'Application launch signal transmitted.'
         }));
         return;
     }
@@ -424,7 +484,7 @@ async function handleApiRequest(req, res, pathname) {
         return;
     }
 
-    // 5. POST /api/system/search (Google, YouTube, Wikipedia, GitHub, Bing)
+    // 5. POST /api/system/search (Google, YouTube, Wikipedia, GitHub, Bing, Amazon)
     if (pathname === '/api/system/search' && req.method === 'POST') {
         const data = await readBody();
         const query = (data.query || '').trim();
@@ -593,7 +653,46 @@ async function handleApiRequest(req, res, pathname) {
         return;
     }
 
-    // 11. MONGODB CONVERSATION HISTORY API
+    // 11. POST /api/system/file-action (List, Read, Write local files)
+    if (pathname === '/api/system/file-action' && req.method === 'POST') {
+        const data = await readBody();
+        const action = data.action;
+        const targetPath = data.path || ROOT_DIR;
+
+        try {
+            if (action === 'list') {
+                const files = fs.readdirSync(targetPath);
+                const items = files.map(name => {
+                    const full = path.join(targetPath, name);
+                    try {
+                        const stat = fs.statSync(full);
+                        return { name, isDirectory: stat.isDirectory(), size: stat.size };
+                    } catch (e) {
+                        return { name, isDirectory: false, size: 0 };
+                    }
+                });
+                res.writeHead(200);
+                res.end(JSON.stringify({ success: true, path: targetPath, items }));
+                return;
+            } else if (action === 'read') {
+                const content = fs.readFileSync(targetPath, 'utf8');
+                res.writeHead(200);
+                res.end(JSON.stringify({ success: true, path: targetPath, content }));
+                return;
+            } else if (action === 'write') {
+                fs.writeFileSync(targetPath, data.content || '', 'utf8');
+                res.writeHead(200);
+                res.end(JSON.stringify({ success: true, path: targetPath, message: 'File written successfully' }));
+                return;
+            }
+        } catch (err) {
+            res.writeHead(500);
+            res.end(JSON.stringify({ success: false, error: err.message }));
+            return;
+        }
+    }
+
+    // 12. MONGODB CONVERSATION HISTORY API
     // GET /api/history
     if (pathname === '/api/history' && req.method === 'GET') {
         const messages = await getHistoryMessages();
@@ -606,7 +705,7 @@ async function handleApiRequest(req, res, pathname) {
         return;
     }
 
-    // POST /api/history
+    // POST /api/history (Saves user prompt & assistant response to MongoDB)
     if (pathname === '/api/history' && req.method === 'POST') {
         const data = await readBody();
         const saved = await saveHistoryMessage(data);
@@ -663,7 +762,7 @@ async function handleApiRequest(req, res, pathname) {
         return;
     }
 
-    // 12. POST /api/tunnel/toggle
+    // 13. POST /api/tunnel/toggle
     if (pathname === '/api/tunnel/toggle' && req.method === 'POST') {
         if (activeTunnelProcess) {
             try { activeTunnelProcess.kill(); } catch (e) {}
@@ -696,64 +795,42 @@ async function handleApiRequest(req, res, pathname) {
             tunnelChild.stdout.on('data', onData);
             tunnelChild.stderr.on('data', onData);
 
-            tunnelChild.on('close', () => {
-                activeTunnelProcess = null;
-                activeTunnelUrl = null;
-            });
-
-            let waited = 0;
-            while (!capturedUrl && waited < 30) {
-                await new Promise(r => setTimeout(r, 200));
-                waited++;
-            }
-
-            if (capturedUrl) {
+            setTimeout(() => {
                 res.writeHead(200);
                 res.end(JSON.stringify({
-                    success: true,
-                    active: true,
-                    tunnelUrl: capturedUrl,
-                    qrCodeUrl: `https://api.qrserver.com/v1/create-qr-code/?size=260x260&margin=10&data=${encodeURIComponent(capturedUrl)}`,
-                    message: 'Remote secure cellular tunnel operational!'
+                    success: Boolean(activeTunnelUrl),
+                    active: Boolean(activeTunnelUrl),
+                    tunnelUrl: activeTunnelUrl,
+                    message: activeTunnelUrl
+                        ? `Satellite tunnel online at: ${activeTunnelUrl}`
+                        : 'Tunnel initializing in background. Please refresh in 3 seconds.'
                 }));
-            } else {
-                res.writeHead(200);
-                res.end(JSON.stringify({
-                    success: false,
-                    active: false,
-                    message: 'Tunnel initiation started in background. Please retry in a few seconds.'
-                }));
-            }
-        } catch (err) {
+            }, 3500);
+        } catch (e) {
             res.writeHead(500);
-            res.end(JSON.stringify({ success: false, error: err.message }));
+            res.end(JSON.stringify({ success: false, error: e.message }));
         }
         return;
     }
 
+    // Default 404 for unknown API routes
     res.writeHead(404);
     res.end(JSON.stringify({ success: false, error: 'Endpoint not found' }));
 }
 
 /**
- * Static File Server Handler
+ * Handle Static File Requests
  */
 function handleStaticFile(req, res, pathname) {
-    let safePath = path.normalize(decodeURIComponent(pathname));
+    let safePath = path.normalize(pathname).replace(/^(\.\.[\/\\])+/, '');
     if (safePath === '/' || safePath === '\\') safePath = '/index.html';
 
     const filePath = path.join(ROOT_DIR, safePath);
 
-    if (!filePath.startsWith(ROOT_DIR)) {
-        res.writeHead(403);
-        res.end('Access Denied');
-        return;
-    }
-
     fs.stat(filePath, (err, stats) => {
         if (err || !stats.isFile()) {
             res.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' });
-            res.end(`404 Not Found: ${pathname}`);
+            res.end('404 Not Found');
             return;
         }
 
@@ -763,7 +840,7 @@ function handleStaticFile(req, res, pathname) {
         res.writeHead(200, {
             'Content-Type': contentType,
             'Content-Length': stats.size,
-            'Access-Control-Allow-Origin': '*'
+            'Cache-Control': 'no-cache'
         });
 
         const stream = fs.createReadStream(filePath);
@@ -772,7 +849,7 @@ function handleStaticFile(req, res, pathname) {
 }
 
 /**
- * Initialize Server
+ * Server Lifecycle Initialization
  */
 const server = http.createServer((req, res) => {
     const parsedUrl = new URL(req.url, `http://${req.headers.host || 'localhost'}`);

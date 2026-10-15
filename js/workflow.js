@@ -88,7 +88,12 @@ class JarvisWorkflowEngine {
                 id: 'system_diagnostics',
                 app: 'Hardware Telemetry Monitor',
                 description: 'Inspects real logical CPU cores, network latency, power, and OS platform.',
-                execute: async (params) => this.toolSystemDiagnostics(params)
+            },
+            {
+                id: 'device_app_launch',
+                app: 'Device App Launcher',
+                description: 'Smoothly launches native device apps like WhatsApp, Notepad, Calculator, VS Code, Spotify, etc.',
+                execute: async (params) => this.toolDeviceAppLaunch(params)
             }
         ];
     }
@@ -388,6 +393,18 @@ class JarvisWorkflowEngine {
             summary: `Platform: ${platform}, Cores: ${cores}, Memory: ${memory}, Network: ${online ? 'ONLINE' : 'OFFLINE'}`
         };
     }
+    async toolDeviceAppLaunch(params) {
+        const app = params.app || params.appName;
+        if (!app) throw new Error('Target device application name is required.');
+        if (!window.jarvisDevice) throw new Error('Device apps controller is not initialized.');
+
+        const resultMsg = window.jarvisDevice.launchApp(app, params);
+        return {
+            status: 'launched',
+            app: app,
+            message: resultMsg
+        };
+    }
 
     /* ==========================================================================
        AUTONOMOUS PLANNER & DECOMPOSER
@@ -547,6 +564,43 @@ User Objective: "${userGoal}"`;
             };
         }
 
+<<<<<<< HEAD
+=======
+        // Pattern D: Native App & Messaging Dispatch (WhatsApp, Notepad, etc.)
+        if (q.includes('whatsapp') || q.includes('notepad') || (q.includes('notes') && q.includes('write')) || q.includes('calc') || q.includes('vscode')) {
+            const steps = [];
+            if (q.includes('whatsapp') || q.includes('message')) {
+                const waMatch = userGoal.match(/(?:message|text|send|ping)\s+([A-Za-z0-9+]+)\s*(?:saying\s+|that\s+|:|says?\s+)?\s*(.*)/i);
+                const recipient = waMatch ? waMatch[1] : 'Hasan';
+                const message = waMatch && waMatch[2] ? waMatch[2] : 'hi';
+                steps.push({
+                    id: 1,
+                    tool: 'device_app_launch',
+                    app: 'WhatsApp Messenger',
+                    description: `Launch WhatsApp and prepare message for ${recipient}`,
+                    params: { app: 'whatsapp', contact: recipient, text: message }
+                });
+            }
+            if (q.includes('notepad') || q.includes('notes')) {
+                const noteMatch = userGoal.match(/(?:write|type|note|record|put)\s*(?:down|\s+this)?(?:\s*:|\s+that|\s+about)?\s*(.*)/i);
+                const noteText = noteMatch && noteMatch[1] ? noteMatch[1] : 'Automated workflow note';
+                steps.push({
+                    id: steps.length + 1,
+                    tool: 'device_app_launch',
+                    app: 'Desktop Notepad',
+                    description: `Open Notepad workspace and insert text: "${noteText.slice(0, 30)}"`,
+                    params: { app: 'notepad', text: noteText }
+                });
+            }
+            if (steps.length > 0) {
+                return {
+                    goal: `Automated Device Execution: "${userGoal.slice(0, 40)}"`,
+                    steps: steps
+                };
+            }
+        }
+
+>>>>>>> origin/harsh-index-page
         // Default: 2-step general workflow
         return {
             goal: `Execute Multi-Step Task: "${userGoal.slice(0, 40)}"`,

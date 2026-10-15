@@ -1465,6 +1465,7 @@ html, body {
 }
 
 /* ==========================================================================
+<<<<<<< HEAD
    MOBILE UPLINK, QR SCANNER & SYSTEM BRIDGE STYLING
    ========================================================================== */
 .mobile-uplink-pill {
@@ -1820,7 +1821,7 @@ html, body {
 }
 
 /* ==========================================================================
-   WORKFLOW STEPPER PIPELINE STYLES
+   WORKFLOW STEPPER PIPELINE & FAILURE RECOGNITION UI
    ========================================================================== */
 .workflow-hud-widget {
     background: rgba(4, 14, 28, 0.65);
@@ -1971,12 +1972,105 @@ html, body {
     white-space: nowrap;
 }
 
+<<<<<<< HEAD
+=======
+.step-chip {
+    font-family: var(--font-mono);
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    padding: 1px 6px;
+    border-radius: 4px;
+    text-transform: uppercase;
+}
+
+.step-chip.pending {
+    background: rgba(255, 255, 255, 0.06);
+    color: var(--text-dim);
+}
+
+.step-chip.running {
+    background: rgba(255, 183, 3, 0.2);
+    color: var(--warning-color);
+    border: 1px solid var(--warning-color);
+    animation: pulseWarning 1.2s infinite ease-in-out;
+}
+
+.step-chip.completed {
+    background: rgba(0, 255, 136, 0.15);
+    color: #00ff88;
+    border: 1px solid rgba(0, 255, 136, 0.4);
+}
+
+.step-chip.healed {
+    background: rgba(0, 240, 255, 0.15);
+    color: var(--primary-glow);
+    border: 1px solid var(--primary-glow);
+}
+
+.step-chip.failed {
+    background: rgba(255, 51, 102, 0.2);
+    color: var(--alert-color);
+    border: 1px solid var(--alert-color);
+    animation: flashAlert 1s infinite alternate;
+}
+
+.step-chip.skipped {
+    background: rgba(255, 255, 255, 0.08);
+    color: var(--text-dim);
+}
+
+>>>>>>> origin/harsh-index-page
 .step-desc {
     font-size: 12px;
     color: var(--text-secondary);
     line-height: 1.4;
 }
 
+<<<<<<< HEAD
+=======
+/* FAILURE RECOGNITION BOX & RECOVERY ACTIONS */
+.step-error-box {
+    margin-top: 6px;
+    padding: 6px 8px;
+    background: rgba(255, 51, 102, 0.12);
+    border: 1px solid rgba(255, 51, 102, 0.4);
+    border-radius: var(--border-radius-sm);
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.error-text {
+    font-size: 11px;
+    color: #ff859f;
+    font-family: var(--font-mono);
+}
+
+.step-actions {
+    display: flex;
+    gap: 6px;
+    justify-content: flex-end;
+}
+
+.retry-btn {
+    background: rgba(255, 183, 3, 0.25);
+    border: 1px solid var(--warning-color);
+    color: var(--warning-color);
+}
+
+.retry-btn:hover {
+    background: var(--warning-color);
+    color: #000;
+}
+
+.skip-btn {
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: var(--text-secondary);
+}
+
+>>>>>>> origin/harsh-index-page
 /* WORKFLOW PRESETS GRID */
 .workflow-presets-grid {
     display: grid;
@@ -2019,6 +2113,7 @@ html, body {
 }
 
 /* ==========================================================================
+<<<<<<< HEAD
    MONGODB CONVERSATION ARCHIVE MODAL
    ========================================================================== */
 .history-archive-card {
@@ -2099,3 +2194,273 @@ html, body {
 
 
 
+=======
+   CROSS-DEVICE SYNC & PWA MODAL
+   ========================================================================== */
+.sync-card {
+    background: rgba(0, 0, 0, 0.35);
+    border: 1px solid var(--primary-border);
+    border-radius: var(--border-radius-md);
+    padding: 12px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.sync-card-title {
+    font-family: var(--font-display);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.8px;
+    color: var(--primary-glow);
+}
+
+.sync-card-desc {
+    font-size: 12px;
+    color: var(--text-secondary);
+    line-height: 1.4;
+}
+
+.sync-actions-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 4px;
+}
+
+.full-width {
+    width: 100%;
+}
+
+/* ==========================================================================
+   MOBILE BOTTOM NAVIGATION BAR (< 820px)
+   ========================================================================== */
+.mobile-hud-nav {
+    display: none;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100vw;
+    height: 52px;
+    background: rgba(3, 7, 18, 0.95);
+    backdrop-filter: var(--backdrop-blur);
+    border-top: 1px solid var(--primary-border);
+    z-index: 1000;
+    justify-content: space-around;
+    align-items: center;
+    padding: 0 8px;
+}
+
+.mobile-nav-btn {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: none;
+    color: var(--text-dim);
+    gap: 2px;
+    cursor: pointer;
+    padding: 6px 0;
+    transition: all 0.2s ease;
+}
+
+.mobile-nav-btn.active {
+    color: var(--primary-glow);
+}
+
+.mobile-nav-btn.active .nav-icon {
+    filter: drop-shadow(0 0 6px var(--primary-glow));
+    transform: scale(1.1);
+}
+
+.mobile-nav-btn .nav-icon {
+    font-size: 16px;
+    transition: transform 0.2s ease;
+}
+
+.mobile-nav-btn .nav-label {
+    font-family: var(--font-display);
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+}
+
+@media (max-width: 820px) {
+    .mobile-hud-nav {
+        display: flex;
+    }
+
+    body {
+        padding-bottom: 56px;
+    }
+
+    .hud-panel.panel-hidden {
+        display: none !important;
+    }
+}
+
+@keyframes pulseWarning {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.45; }
+}
+
+@keyframes flashAlert {
+    0% { box-shadow: 0 0 4px var(--alert-color); }
+    100% { box-shadow: 0 0 14px var(--alert-color); }
+}
+
+/* ==========================================================================
+   DEVICE APPS LAUNCHER DECK & DESKTOP NOTEPAD WORKSPACE
+   ========================================================================== */
+.device-apps-section {
+    margin-bottom: 16px;
+    background: rgba(4, 14, 28, 0.65);
+    border: 1px solid var(--primary-border);
+    border-radius: var(--border-radius-md);
+    padding: 12px;
+}
+
+.device-pill {
+    font-family: var(--font-display);
+    font-size: 9px;
+    letter-spacing: 1px;
+    color: var(--primary-glow);
+    padding: 2px 6px;
+    border-radius: 4px;
+    background: var(--primary-dim);
+    border: 1px solid var(--primary-border);
+}
+
+.device-apps-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 6px;
+    margin-top: 8px;
+}
+
+.device-app-btn {
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: var(--border-radius-sm);
+    padding: 8px 4px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.device-app-btn:hover {
+    background: var(--primary-dim);
+    border-color: var(--primary-glow);
+    color: var(--text-primary);
+    transform: translateY(-2px);
+    box-shadow: 0 0 12px rgba(0, 240, 255, 0.2);
+}
+
+.device-app-btn .app-icon {
+    font-size: 16px;
+}
+
+.device-app-btn .app-name {
+    font-family: var(--font-ui);
+    font-size: 10.5px;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+}
+
+/* DESKTOP NOTEPAD HUD MODAL */
+.notepad-window {
+    width: 90%;
+    max-width: 720px;
+    background: rgba(6, 12, 24, 0.95);
+    border: 1px solid var(--primary-glow);
+    box-shadow: var(--box-glow-intense);
+    display: flex;
+    flex-direction: column;
+    height: 75vh;
+}
+
+.notepad-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--primary-border);
+    background: rgba(0, 0, 0, 0.5);
+}
+
+.notepad-title-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.notepad-icon {
+    font-size: 16px;
+}
+
+.notepad-controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.notepad-body {
+    flex: 1;
+    padding: 0;
+    display: flex;
+    overflow: hidden;
+}
+
+.notepad-textarea {
+    width: 100%;
+    height: 100%;
+    background: rgba(2, 6, 14, 0.85);
+    border: none;
+    color: #e0f4ff;
+    font-family: 'Share Tech Mono', 'Consolas', monospace;
+    font-size: 13.5px;
+    line-height: 1.6;
+    padding: 16px;
+    outline: none;
+    resize: none;
+    white-space: pre-wrap;
+}
+
+.notepad-textarea::placeholder {
+    color: rgba(127, 166, 200, 0.4);
+}
+
+.notepad-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 6px 14px;
+    background: rgba(0, 0, 0, 0.6);
+    border-top: 1px solid var(--primary-border);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--text-dim);
+}
+
+.notepad-status {
+    color: var(--primary-glow);
+}
+
+.notepad-hint {
+    color: var(--text-dim);
+    font-size: 10px;
+}
+
+
+>>>>>>> origin/harsh-index-page

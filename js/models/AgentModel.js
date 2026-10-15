@@ -143,12 +143,14 @@ Speak naturally and confirm the action is executing.`;
             };
         }
 
-        // C. YouTube Search & Playback (e.g., "search youtube for lo-fi music")
+        // C. YouTube Search & Playback (e.g., "open youtube and search Ae Dil Hai Mushkil", "search youtube for lo-fi music")
         if (q.includes('youtube') && (q.includes('search') || q.includes('play') || q.includes('find') || q.includes('look up') || q.includes('搜索') || q.includes('播放'))) {
             let ytQuery = input
-                .replace(/.*(?:search|look up|find|play|搜索|播放)\s+(?:for\s+|about\s+|on\s+youtube\s+for\s+)?/i, '')
-                .replace(/\s+(?:on|in)\s+youtube.*/i, '')
-                .replace(/.*youtube\s+(?:for\s+)?/i, '')
+                .replace(/^(?:please\s+|can\s+you\s+|hey\s+jarvis\s+|hello\s+)?(?:open\s+youtube\s+(?:and\s+)?|launch\s+youtube\s+(?:and\s+)?|go\s+to\s+youtube\s+(?:and\s+)?)/i, '')
+                .replace(/^(?:search\s+(?:youtube\s+)?(?:for\s+|about\s+)?|play\s+(?:on\s+youtube\s+)?|find\s+(?:on\s+youtube\s+)?|look\s*up\s+(?:on\s+youtube\s+)?|搜索|播放)\s*/i, '')
+                .replace(/\s+(?:on|in)\s+youtube.*$/i, '')
+                .replace(/\s+(?:and\s+)?(?:play\s+(?:that|the|this)?\s*video|play\s+it|start\s+it|watch\s+it).*$/i, '')
+                .replace(/\s+on\s+youtube$/i, '')
                 .trim();
             if (ytQuery) {
                 const ytUrl = `https://www.youtube.com/results?search_query=${encodeURIComponent(ytQuery)}`;
@@ -157,7 +159,7 @@ Speak naturally and confirm the action is executing.`;
                     engine: 'youtube',
                     query: ytQuery,
                     url: ytUrl,
-                    message: `Searching YouTube for "${ytQuery}", ${this.config.userName}. Opening video results.`
+                    message: `Searching YouTube for "${ytQuery}", ${this.config.userName}. Opening video results in foreground.`
                 };
             }
         }

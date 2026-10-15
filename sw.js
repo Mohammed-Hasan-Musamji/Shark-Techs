@@ -12,9 +12,9 @@ const STATIC_ASSETS = [
     './js/sound.js',
     './js/visualizer.js',
     './js/speech.js',
-    './js/agent.js',
-    './js/app.js',
-    './js/workflow.js'
+    './js/device.js',
+    './js/workflow.js',
+    './js/app.js'
 ];
 
 self.addEventListener('install', (event) => {

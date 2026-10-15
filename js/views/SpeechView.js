@@ -65,43 +65,52 @@ class SpeechView {
 
         try {
             this.recognition = new SpeechRec();
-            this.recognition.continuous = false;
+            this.recognition.continuous = true;
             this.recognition.interimResults = true;
             this.recognition.lang = this.speechLang;
+
+            this.accumulatedTranscript = '';
+            this.silenceTimer = null;
+            this.silenceTimeoutMs = 2500; // Generous 2.5s silence window to prevent cutting off words
 
             this.recognition.onstart = () => {
                 this.isListening = true;
                 this.updateMicButton(true);
-                this.setFeedback('JARVIS is listening... Speak your command.');
+                this.setFeedback('JARVIS is listening... Speak continuously (2.5s pause buffer).');
                 if (this.onListeningChange) this.onListeningChange(true);
             };
 
             this.recognition.onresult = (event) => {
                 let interimTranscript = '';
-                let finalTranscript = '';
+                let currentSessionFinal = '';
 
                 for (let i = event.resultIndex; i < event.results.length; ++i) {
                     if (event.results[i].isFinal) {
-                        finalTranscript += event.results[i][0].transcript;
+                        currentSessionFinal += ' ' + event.results[i][0].transcript;
                     } else {
                         interimTranscript += event.results[i][0].transcript;
                     }
                 }
 
-                const currentText = finalTranscript || interimTranscript;
-                if (currentText) {
-                    this.setFeedback(`Heard: "${currentText}"`);
-                    const cmdInput = document.getElementById('commandInput');
-                    if (cmdInput && interimTranscript) {
-                        cmdInput.value = currentText;
-                    }
+                if (currentSessionFinal) {
+                    this.accumulatedTranscript += currentSessionFinal;
                 }
 
-                if (finalTranscript) {
-                    const clean = finalTranscript.trim();
+                const liveSpoken = (this.accumulatedTranscript + ' ' + interimTranscript).replace(/\s+/g, ' ').trim();
+                if (liveSpoken) {
+                    this.setFeedback(`Listening: "${liveSpoken}" (will process after pause)`);
                     const cmdInput = document.getElementById('commandInput');
-                    if (cmdInput) cmdInput.value = clean;
-                    if (this.onSpeechResult) this.onSpeechResult(clean);
+                    if (cmdInput) {
+                        cmdInput.value = liveSpoken;
+                    }
+
+                    // Reset 2.5-second silence timer on every spoken syllable/word
+                    if (this.silenceTimer) {
+                        clearTimeout(this.silenceTimer);
+                    }
+                    this.silenceTimer = setTimeout(() => {
+                        this.commitSpeechResult();
+                    }, this.silenceTimeoutMs);
                 }
             };
 
@@ -118,7 +127,13 @@ class SpeechView {
             };
 
             this.recognition.onend = () => {
-                this.stopListening();
+                if (this.isListening) {
+                    if (this.accumulatedTranscript.trim()) {
+                        this.commitSpeechResult();
+                    } else {
+                        this.stopListening();
+                    }
+                }
             };
         } catch (e) {
             console.error('Failed to initialize speech recognition:', e);
@@ -177,7 +192,13 @@ class SpeechView {
             return false;
         }
         if (this.isListening) {
-            this.stopListening();
+            // If user explicitly clicks mic while listening, process whatever they spoke immediately
+            const currentSpoken = this.accumulatedTranscript.trim() || (document.getElementById('commandInput')?.value || '').trim();
+            if (currentSpoken) {
+                this.commitSpeechResult();
+            } else {
+                this.stopListening();
+            }
             return false;
         } else {
             this.startListening();
@@ -187,6 +208,11 @@ class SpeechView {
 
     startListening() {
         if (!this.recognition) return;
+        this.accumulatedTranscript = '';
+        if (this.silenceTimer) {
+            clearTimeout(this.silenceTimer);
+            this.silenceTimer = null;
+        }
         try {
             if (this.synthesis) this.synthesis.cancel();
             this.recognition.start();
@@ -195,7 +221,29 @@ class SpeechView {
         }
     }
 
+    commitSpeechResult() {
+        if (this.silenceTimer) {
+            clearTimeout(this.silenceTimer);
+            this.silenceTimer = null;
+        }
+
+        const cmdInput = document.getElementById('commandInput');
+        const finalSpoken = (cmdInput ? cmdInput.value : this.accumulatedTranscript).trim();
+
+        this.accumulatedTranscript = '';
+        this.stopListening();
+
+        if (finalSpoken && this.onSpeechResult) {
+            this.setFeedback(`Transmitting: "${finalSpoken}"`);
+            this.onSpeechResult(finalSpoken);
+        }
+    }
+
     stopListening() {
+        if (this.silenceTimer) {
+            clearTimeout(this.silenceTimer);
+            this.silenceTimer = null;
+        }
         this.isListening = false;
         this.updateMicButton(false);
         if (this.recognition) {

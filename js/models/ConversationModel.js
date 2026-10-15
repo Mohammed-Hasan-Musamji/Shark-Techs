@@ -74,8 +74,8 @@ class ConversationModel {
     }
 
     addMessage(role, text, isError = false) {
-        const timestamp = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-        const sender = role === 'user' ? 'TONY STARK' : 'J.A.R.V.I.S.';
+        const activeUserName = (localStorage.getItem('jarvis_user_name') || 'TONY STARK').toUpperCase();
+        const sender = role === 'user' ? activeUserName : 'J.A.R.V.I.S.';
         const badge = role === 'user' ? 'COMMAND' : (isError ? 'ALERT' : 'ONLINE');
 
         const message = {

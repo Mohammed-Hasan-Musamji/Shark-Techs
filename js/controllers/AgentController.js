@@ -185,10 +185,18 @@ class AgentController {
             if (this.directives) {
                 this.directives.appendNote(`[Dictated] ${direct.text}`);
             }
+            // Populate in-HUD Notepad if present
+            const hudNotepadArea = document.getElementById('desktopNotepadTextarea');
+            if (hudNotepadArea) {
+                hudNotepadArea.value = (hudNotepadArea.value ? hudNotepadArea.value + '\n\n' : '') + direct.text;
+                if (window.jarvisDevice && typeof window.jarvisDevice.updateNotepadStats === 'function') {
+                    window.jarvisDevice.updateNotepadStats();
+                }
+            }
             if (this.systemBridge) {
                 const res = await this.systemBridge.openAppWithText('notepad', direct.text);
                 if (res && res.success) {
-                    this.telemetry.appendLog(`[NOTEPAD] Note dictated and opened in Notepad.`);
+                    this.telemetry.appendLog(`[NOTEPAD] Note dictated and opened in Windows Notepad.`);
                 }
             }
         } else if (direct.action === 'bridge_whatsapp_msg') {
