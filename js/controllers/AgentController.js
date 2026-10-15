@@ -168,10 +168,21 @@ class AgentController {
             this.audio.playProcessComplete();
         } else if (direct.action === 'bridge_app') {
             this.deliverResponse(direct.message);
-            if (this.systemBridge) await this.systemBridge.openApp(direct.app);
+            if (this.systemBridge) {
+                const res = await this.systemBridge.openApp(direct.app);
+                if (res && res.success) {
+                    this.telemetry.appendLog(`[APP] Launched ${direct.app} on host system.`);
+                } else {
+                    this.telemetry.appendLog(`[WARN] Host bridge launch: ${res?.error || 'Make sure server.js is running on port 9000'}`);
+                }
+            }
         } else if (direct.action === 'bridge_url') {
             this.deliverResponse(direct.message);
-            if (this.systemBridge) await this.systemBridge.openUrl(direct.url);
+            try { window.open(direct.url, '_blank'); } catch (e) {}
+            if (this.systemBridge) {
+                await this.systemBridge.openUrl(direct.url);
+                this.telemetry.appendLog(`[NAV] Navigated to ${direct.url}`);
+            }
         } else if (direct.action === 'bridge_volume') {
             this.deliverResponse(direct.message);
             if (this.systemBridge) await this.systemBridge.controlVolume(direct.volumeAction);

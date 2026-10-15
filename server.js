@@ -120,6 +120,25 @@ function runPowerShell(script) {
 }
 
 /**
+ * Launch an interactive GUI application or open a URL in the user's active desktop session
+ */
+function launchAppOrUrl(target) {
+    return new Promise((resolve) => {
+        try {
+            const child = spawn('cmd.exe', ['/c', 'start', '', target], {
+                detached: true,
+                stdio: 'ignore',
+                windowsHide: false
+            });
+            child.unref();
+            resolve({ success: true, command: target, output: 'Launched interactive window.' });
+        } catch (err) {
+            runPowerShell(`Start-Process "${target}"`).then(resolve);
+        }
+    });
+}
+
+/**
  * Handle API Requests
  */
 async function handleApiRequest(req, res, pathname) {
@@ -240,17 +259,14 @@ async function handleApiRequest(req, res, pathname) {
         };
 
         const target = appMap[app] || app;
-        const script = target.startsWith('http://') || target.startsWith('https://')
-            ? `Start-Process "${target}"`
-            : `Start-Process "${target}"`;
-        const result = await runPowerShell(script);
+        const result = await launchAppOrUrl(target);
 
         res.writeHead(200);
         res.end(JSON.stringify({
             success: result.success,
             app,
             command: target,
-            output: result.stdout || result.stderr || 'Application launch signal transmitted.'
+            output: result.output || result.stderr || 'Application launch signal transmitted.'
         }));
         return;
     }
@@ -270,8 +286,7 @@ async function handleApiRequest(req, res, pathname) {
             targetUrl = 'https://' + targetUrl;
         }
 
-        const script = `Start-Process "${targetUrl}"`;
-        const result = await runPowerShell(script);
+        const result = await launchAppOrUrl(targetUrl);
 
         res.writeHead(200);
         res.end(JSON.stringify({

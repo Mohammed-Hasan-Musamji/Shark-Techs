@@ -27,9 +27,18 @@ class SystemBridgeModel {
         };
 
         this.lastScreenshot = null;
+        this.apiBase = this.resolveApiBase();
 
         // Auto-check bridge and start polling
         this.init();
+    }
+
+    resolveApiBase() {
+        if (typeof window === 'undefined') return 'http://localhost:9000';
+        if (window.location.protocol === 'file:' || (window.location.port && window.location.port !== '9000')) {
+            return 'http://localhost:9000';
+        }
+        return '';
     }
 
     subscribe(callback) {
@@ -52,7 +61,7 @@ class SystemBridgeModel {
 
     async fetchNetworkInfo() {
         try {
-            const res = await fetch('/api/network-info');
+            const res = await fetch(`${this.apiBase}/api/network-info`);
             if (res.ok) {
                 const data = await res.json();
                 this.isBridgeAvailable = true;
@@ -75,7 +84,7 @@ class SystemBridgeModel {
 
     async fetchSystemStats() {
         try {
-            const res = await fetch('/api/system/stats');
+            const res = await fetch(`${this.apiBase}/api/system/stats`);
             if (res.ok) {
                 const data = await res.json();
                 this.isBridgeAvailable = true;
@@ -97,7 +106,7 @@ class SystemBridgeModel {
 
     async openApp(appName) {
         try {
-            const res = await fetch('/api/system/open-app', {
+            const res = await fetch(`${this.apiBase}/api/system/open-app`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ app: appName })
@@ -112,7 +121,7 @@ class SystemBridgeModel {
 
     async openUrl(url) {
         try {
-            const res = await fetch('/api/system/open-url', {
+            const res = await fetch(`${this.apiBase}/api/system/open-url`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ url })
@@ -127,7 +136,7 @@ class SystemBridgeModel {
 
     async controlVolume(action) {
         try {
-            const res = await fetch('/api/system/volume', {
+            const res = await fetch(`${this.apiBase}/api/system/volume`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ action })
@@ -142,7 +151,7 @@ class SystemBridgeModel {
 
     async lockWorkstation() {
         try {
-            const res = await fetch('/api/system/lock', { method: 'POST' });
+            const res = await fetch(`${this.apiBase}/api/system/lock`, { method: 'POST' });
             const data = await res.json();
             this.notify('action_completed', { action: 'lock', data });
             return data;
@@ -153,7 +162,7 @@ class SystemBridgeModel {
 
     async captureScreenshot() {
         try {
-            const res = await fetch('/api/system/screenshot');
+            const res = await fetch(`${this.apiBase}/api/system/screenshot`);
             if (res.ok) {
                 const data = await res.json();
                 if (data.success && data.image) {
@@ -170,7 +179,7 @@ class SystemBridgeModel {
 
     async executeTerminal(command) {
         try {
-            const res = await fetch('/api/system/execute', {
+            const res = await fetch(`${this.apiBase}/api/system/execute`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ command })
@@ -185,7 +194,7 @@ class SystemBridgeModel {
 
     async toggleRemoteTunnel() {
         try {
-            const res = await fetch('/api/tunnel/toggle', { method: 'POST' });
+            const res = await fetch(`${this.apiBase}/api/tunnel/toggle`, { method: 'POST' });
             const data = await res.json();
             this.networkInfo.isTunnelActive = data.active;
             this.networkInfo.remoteTunnelUrl = data.tunnelUrl || null;
