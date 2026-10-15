@@ -176,7 +176,7 @@ class JarvisAIAgent {
         const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
         const dateStr = now.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
 
-        let batteryContext = 'Arc Reactor cell nominal';
+        let batteryContext = 'AC Desktop Power (100%)';
         if (window.jarvisApp && window.jarvisApp.batteryInfo) {
             batteryContext = `${window.jarvisApp.batteryInfo.level}% (${window.jarvisApp.batteryInfo.charging ? 'Charging' : 'Battery'})`;
         }
@@ -190,6 +190,7 @@ class JarvisAIAgent {
 
         const cores = navigator.hardwareConcurrency ? `${navigator.hardwareConcurrency} logical cores` : 'Multi-core CPU';
         const platform = navigator.platform || 'Desktop System';
+        const activeModelName = this.getActiveModel();
 
         return `You are J.A.R.V.I.S. (Just A Rather Very Intelligent System), the ultra-sophisticated personal AI assistant to ${this.userName}.
 You address the user by name as "${this.userName}".
