@@ -1,0 +1,180 @@
+/**
+ * ============================================================================
+ * J.A.R.V.I.S. AGENT CONTROLLER (C - MVC)
+ * Orchestrates user voice/text commands, cognitive processing & vocal delivery
+ * ============================================================================
+ */
+
+class AgentController {
+    constructor(agentModel, conversationModel, conversationView, visualizerView, speechView, audioView, telemetryModel, directiveModel, configModel) {
+        this.agent = agentModel;
+        this.conversation = conversationModel;
+        this.conversationView = conversationView;
+        this.visualizer = visualizerView;
+        this.speech = speechView;
+        this.audio = audioView;
+        this.telemetry = telemetryModel;
+        this.directives = directiveModel;
+        this.config = configModel;
+
+        this.init();
+    }
+
+    init() {
+        this.setupCommandInputListeners();
+        this.setupVoiceListeners();
+    }
+
+    setupCommandInputListeners() {
+        const cmdInput = document.getElementById('commandInput');
+        const btnSubmit = document.getElementById('btnSubmitCommand');
+
+        const submitAction = () => {
+            const val = cmdInput ? cmdInput.value.trim() : '';
+            if (val) {
+                this.executeCommand(val);
+                if (cmdInput) cmdInput.value = '';
+            }
+        };
+
+        if (btnSubmit) {
+            btnSubmit.addEventListener('click', submitAction);
+        }
+
+        if (cmdInput) {
+            cmdInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    submitAction();
+                }
+            });
+        }
+    }
+
+    setupVoiceListeners() {
+        // Toggle listening on Arc Reactor canvas click
+        const reactorTrigger = document.getElementById('reactorTrigger');
+        if (reactorTrigger) {
+            reactorTrigger.addEventListener('click', () => {
+                this.speech.toggleListening();
+            });
+        }
+
+        // Toggle listening on Microphone button click
+        const btnVoiceToggle = document.getElementById('btnVoiceToggle');
+        if (btnVoiceToggle) {
+            btnVoiceToggle.addEventListener('click', () => {
+                this.speech.toggleListening();
+            });
+        }
+
+        // Hook into SpeechView state changes
+        this.speech.onListeningChange = (isListening) => {
+            if (isListening) {
+                this.visualizer.setState('listening');
+                this.audio.playWakePing();
+            } else {
+                if (this.visualizer.state === 'listening') {
+                    this.visualizer.setState('standby');
+                }
+            }
+        };
+
+        // Hook into SpeechView recognition transcription result
+        this.speech.onSpeechResult = (transcript) => {
+            this.executeCommand(transcript);
+        };
+    }
+
+    async executeCommand(rawInput) {
+        const input = rawInput.trim();
+        if (!input) return;
+
+        // 1. Append user prompt to conversation stream
+        this.conversation.addMessage('user', input);
+
+        // 2. Audio & Visualizer feedback
+        this.audio.playClick();
+        this.visualizer.setState('processing');
+
+        // 3. Check for direct local action (Theme, Tasks, Weather, Protocols, etc.)
+        const direct = this.agent.checkDirectAction(input);
+        if (direct) {
+            await this.handleDirectAction(direct, input);
+            return;
+        }
+
+        // 4. If an LLM provider is active, query LLM (Groq / OpenAI / Gemini)
+        const activeKey = this.config.getApiKey();
+        if (activeKey && this.config.provider !== 'builtin') {
+            try {
+                this.telemetry.appendLog(`[LLM] Routing prompt to ${this.config.provider.toUpperCase()} (${this.config.getActiveModel()})...`);
+                const response = await this.agent.queryLLM(input);
+                this.deliverResponse(response);
+                return;
+            } catch (err) {
+                console.warn('Frontier LLM Query Error:', err);
+                this.telemetry.appendLog(`[ERR] ${this.config.provider.toUpperCase()}: ${err.message}`);
+                const friendlyError = this.agent.formatErrorMessage(err);
+                this.deliverResponse(friendlyError, true);
+                return;
+            }
+        }
+
+        // 5. Offline heuristics fallback
+        const offlineReply = this.agent.queryOfflineEngine(input);
+        this.deliverResponse(offlineReply);
+    }
+
+    async handleDirectAction(direct, rawInput) {
+        if (direct.action === 'theme') {
+            this.config.setTheme(direct.theme);
+            this.telemetry.appendLog(`[ARMOR] ${direct.theme.toUpperCase()} matrix calibrated.`);
+            this.deliverResponse(direct.message);
+        } else if (direct.action === 'protocol') {
+            this.telemetry.setProtocol(direct.protocol);
+            if (direct.protocol === 'red-alert') {
+                this.audio.playAlert();
+            } else {
+                this.audio.playProtocolEngaged();
+            }
+            this.deliverResponse(direct.message);
+        } else if (direct.action === 'weather') {
+            const w = await this.telemetry.fetchLiveWeather();
+            const reply = `Atmospheric telemetry in ${w.city}: ${w.tempC}°C (${w.tempF}°F), wind speed at ${w.windSpeed}, humidity at ${w.humidity}. All repulsor flight conditions are favorable, ${this.config.userName}.`;
+            this.deliverResponse(reply);
+        } else if (direct.action === 'add_task') {
+            this.directives.addTask(direct.text);
+            this.deliverResponse(direct.message);
+        } else if (direct.action === 'clear_tasks') {
+            this.directives.clearTasks();
+            this.deliverResponse(direct.message);
+        } else if (direct.action === 'save_note') {
+            this.directives.appendNote(direct.text);
+            this.deliverResponse(direct.message);
+        } else if (direct.action === 'clear_chat') {
+            this.conversation.clear();
+            this.audio.playProcessComplete();
+        } else if (direct.action === 'status') {
+            this.deliverResponse(direct.message);
+        } else if (direct.action === 'response') {
+            this.deliverResponse(direct.message);
+        }
+    }
+
+    deliverResponse(text, isError = false) {
+        this.audio.playProcessComplete();
+        this.conversation.addMessage('jarvis', text, isError);
+
+        // Vocal synthesis with visualizer synchronization
+        this.speech.speak(
+            text,
+            () => {
+                this.visualizer.setState('speaking');
+            },
+            () => {
+                this.visualizer.setState('standby');
+            }
+        );
+    }
+}

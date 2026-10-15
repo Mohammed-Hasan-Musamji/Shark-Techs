@@ -1,15 +1,22 @@
 /**
  * ============================================================================
- * J.A.R.V.I.S. PROCEDURAL SOUND SYNTHESIS ENGINE
- * High-Tech Sci-Fi Audio Generation via Web Audio API (No External Audio Files)
+ * J.A.R.V.I.S. AUDIO VIEW (V - MVC)
+ * Procedural Web Audio API Sound Synthesis for authentic Sci-Fi UI Feedback
  * ============================================================================
  */
 
-class JarvisSoundEngine {
-    constructor() {
+class AudioView {
+    constructor(configModel) {
+        this.config = configModel;
         this.ctx = null;
-        this.enabled = true;
         this.initAudioContext();
+
+        // Listen for config changes (mute/unmute)
+        this.config.subscribe((key) => {
+            if (key === 'sound_muted_changed' || key === 'reset_defaults') {
+                this.updateMuteIcon();
+            }
+        });
     }
 
     initAudioContext() {
@@ -19,7 +26,7 @@ class JarvisSoundEngine {
                 this.ctx = new AudioCtx();
             }
         } catch (e) {
-            console.warn('Web Audio API not supported on this browser.', e);
+            console.warn('Web Audio API not supported on this device.', e);
         }
     }
 
@@ -32,16 +39,20 @@ class JarvisSoundEngine {
         }
     }
 
-    toggleMute() {
-        this.enabled = !this.enabled;
-        return this.enabled;
+    isMuted() {
+        return this.config.soundMuted;
     }
 
-    /**
-     * Futuristic UI Click / Beep
-     */
+    updateMuteIcon() {
+        const soundIcon = document.getElementById('soundIcon');
+        const btnSoundToggle = document.getElementById('btnSoundToggle');
+        const muted = this.isMuted();
+        if (soundIcon) soundIcon.textContent = muted ? '🔇' : '🔊';
+        if (btnSoundToggle) btnSoundToggle.title = muted ? 'Unmute Audio SFX' : 'Mute Audio SFX';
+    }
+
     playClick() {
-        if (!this.enabled) return;
+        if (this.isMuted()) return;
         this.ensureContext();
         if (!this.ctx) return;
 
@@ -62,11 +73,8 @@ class JarvisSoundEngine {
         osc.stop(this.ctx.currentTime + 0.05);
     }
 
-    /**
-     * Voice Recognition Activated Chime (Dual Tone Wake)
-     */
     playWakePing() {
-        if (!this.enabled) return;
+        if (this.isMuted()) return;
         this.ensureContext();
         if (!this.ctx) return;
 
@@ -88,11 +96,8 @@ class JarvisSoundEngine {
         osc.stop(now + 0.3);
     }
 
-    /**
-     * Voice Processing Complete / Jarvis Ready to Speak
-     */
     playProcessComplete() {
-        if (!this.enabled) return;
+        if (this.isMuted()) return;
         this.ensureContext();
         if (!this.ctx) return;
 
@@ -114,11 +119,8 @@ class JarvisSoundEngine {
         osc.stop(now + 0.22);
     }
 
-    /**
-     * Protocol Engaged / Futuristic Power Surge Sweep
-     */
     playProtocolEngaged() {
-        if (!this.enabled) return;
+        if (this.isMuted()) return;
         this.ensureContext();
         if (!this.ctx) return;
 
@@ -130,7 +132,6 @@ class JarvisSoundEngine {
         osc.frequency.setValueAtTime(220, now);
         osc.frequency.exponentialRampToValueAtTime(1320, now + 0.35);
 
-        // Lowpass filter for smooth sci-fi feel
         const filter = this.ctx.createBiquadFilter();
         filter.type = 'lowpass';
         filter.frequency.setValueAtTime(1500, now);
@@ -146,11 +147,8 @@ class JarvisSoundEngine {
         osc.stop(now + 0.42);
     }
 
-    /**
-     * Alert / Red Warning Siren
-     */
     playAlert() {
-        if (!this.enabled) return;
+        if (this.isMuted()) return;
         this.ensureContext();
         if (!this.ctx) return;
 
@@ -175,6 +173,3 @@ class JarvisSoundEngine {
         }
     }
 }
-
-// Global Sound Instance
-window.jarvisSound = new JarvisSoundEngine();

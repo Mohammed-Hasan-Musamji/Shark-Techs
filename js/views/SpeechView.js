@@ -1,29 +1,39 @@
 /**
  * ============================================================================
- * J.A.R.V.I.S. VOICE & SPEECH SYNTHESIS ENGINE
- * Web Speech API Interface: SpeechRecognition & SpeechSynthesis
+ * J.A.R.V.I.S. SPEECH VIEW (V - MVC)
+ * Web Speech Recognition & Speech Synthesis (Authentic British Persona)
  * ============================================================================
  */
 
-class JarvisSpeechEngine {
-    constructor() {
+class SpeechView {
+    constructor(configModel) {
+        this.config = configModel;
         this.recognition = null;
         this.synthesis = window.speechSynthesis;
         this.isListening = false;
         this.availableVoices = [];
         this.selectedVoice = null;
-        this.speechRate = 1.0;
-        this.speechPitch = 1.0;
+
+        // Callback hooks for Controller
+        this.onSpeechResult = null; // (finalTranscript) => {}
+        this.onListeningChange = null; // (isListening) => {}
 
         this.initRecognition();
         this.initVoices();
+
+        // Subscribe to config changes for rate, pitch & voice index
+        this.config.subscribe((key) => {
+            if (key === 'voice_preferences_changed' || key === 'reset_defaults') {
+                this.applyConfigPreferences();
+            }
+        });
     }
 
     initRecognition() {
         const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
         if (!SpeechRec) {
-            console.warn('SpeechRecognition API is not supported in this browser environment.');
-            this.updateFeedback('Speech recognition requires Chrome, Edge, or a Web Speech API browser.');
+            console.warn('SpeechRecognition API not supported on this browser.');
+            this.setFeedback('Speech recognition requires Chrome, Edge, or a Web Speech API browser.');
             return;
         }
 
@@ -35,13 +45,9 @@ class JarvisSpeechEngine {
 
             this.recognition.onstart = () => {
                 this.isListening = true;
-                if (window.jarvisVisualizer) window.jarvisVisualizer.setState('listening');
-                if (window.jarvisSound) window.jarvisSound.playWakePing();
-                
-                const micBtn = document.getElementById('btnVoiceToggle');
-                if (micBtn) micBtn.classList.add('listening');
-
-                this.updateFeedback('JARVIS is listening... Speak your command.');
+                this.updateMicButton(true);
+                this.setFeedback('JARVIS is listening... Speak your command.');
+                if (this.onListeningChange) this.onListeningChange(true);
             };
 
             this.recognition.onresult = (event) => {
@@ -58,7 +64,7 @@ class JarvisSpeechEngine {
 
                 const currentText = finalTranscript || interimTranscript;
                 if (currentText) {
-                    this.updateFeedback(`Heard: "${currentText}"`);
+                    this.setFeedback(`Heard: "${currentText}"`);
                     const cmdInput = document.getElementById('commandInput');
                     if (cmdInput && interimTranscript) {
                         cmdInput.value = currentText;
@@ -66,13 +72,10 @@ class JarvisSpeechEngine {
                 }
 
                 if (finalTranscript) {
-                    const cleanTranscript = finalTranscript.trim();
+                    const clean = finalTranscript.trim();
                     const cmdInput = document.getElementById('commandInput');
-                    if (cmdInput) cmdInput.value = cleanTranscript;
-                    
-                    if (window.jarvisAgent) {
-                        window.jarvisAgent.handleCommand(cleanTranscript);
-                    }
+                    if (cmdInput) cmdInput.value = clean;
+                    if (this.onSpeechResult) this.onSpeechResult(clean);
                 }
             };
 
@@ -84,7 +87,7 @@ class JarvisSpeechEngine {
                 } else if (event.error === 'no-speech') {
                     message = 'No speech detected. Standing by.';
                 }
-                this.updateFeedback(message);
+                this.setFeedback(message);
                 this.stopListening();
             };
 
@@ -104,15 +107,14 @@ class JarvisSpeechEngine {
             const voiceSelect = document.getElementById('voiceSelect');
             if (voiceSelect && this.availableVoices.length > 0) {
                 voiceSelect.innerHTML = '';
-                
-                // Prioritize authentic British English voices for JARVIS
                 let bestVoiceIndex = 0;
+
                 this.availableVoices.forEach((v, index) => {
                     const opt = document.createElement('option');
                     opt.value = index;
                     opt.textContent = `${v.name} (${v.lang})`;
 
-                    // Match UK / British / Jarvis style
+                    // Prioritize British accent for Jarvis
                     const isBritish = v.lang.includes('en-GB') || v.name.toLowerCase().includes('british') || v.name.toLowerCase().includes('daniel');
                     if (isBritish && bestVoiceIndex === 0) {
                         bestVoiceIndex = index;
@@ -120,8 +122,12 @@ class JarvisSpeechEngine {
                     voiceSelect.appendChild(opt);
                 });
 
-                voiceSelect.selectedIndex = bestVoiceIndex;
-                this.selectedVoice = this.availableVoices[bestVoiceIndex];
+                // Check saved index or default
+                const chosenIdx = this.config.selectedVoiceIndex || bestVoiceIndex;
+                if (this.availableVoices[chosenIdx]) {
+                    voiceSelect.selectedIndex = chosenIdx;
+                    this.selectedVoice = this.availableVoices[chosenIdx];
+                }
             }
         };
 
@@ -131,12 +137,19 @@ class JarvisSpeechEngine {
         }
     }
 
+    applyConfigPreferences() {
+        const voiceSelect = document.getElementById('voiceSelect');
+        if (voiceSelect && this.availableVoices[this.config.selectedVoiceIndex]) {
+            voiceSelect.selectedIndex = this.config.selectedVoiceIndex;
+            this.selectedVoice = this.availableVoices[this.config.selectedVoiceIndex];
+        }
+    }
+
     toggleListening() {
         if (!this.recognition) {
-            this.updateFeedback('Speech recognition is not supported in this browser.');
+            this.setFeedback('Speech recognition is not supported in this browser.');
             return false;
         }
-
         if (this.isListening) {
             this.stopListening();
             return false;
@@ -149,10 +162,7 @@ class JarvisSpeechEngine {
     startListening() {
         if (!this.recognition) return;
         try {
-            // Cancel any ongoing speech synthesis first
-            if (this.synthesis) {
-                this.synthesis.cancel();
-            }
+            if (this.synthesis) this.synthesis.cancel();
             this.recognition.start();
         } catch (e) {
             console.warn('Recognition start caught error:', e);
@@ -161,69 +171,58 @@ class JarvisSpeechEngine {
 
     stopListening() {
         this.isListening = false;
-        const micBtn = document.getElementById('btnVoiceToggle');
-        if (micBtn) micBtn.classList.remove('listening');
-
+        this.updateMicButton(false);
         if (this.recognition) {
-            try {
-                this.recognition.stop();
-            } catch (e) {}
+            try { this.recognition.stop(); } catch (e) {}
         }
+        if (this.onListeningChange) this.onListeningChange(false);
+    }
 
-        if (window.jarvisVisualizer && window.jarvisVisualizer.state === 'listening') {
-            window.jarvisVisualizer.setState('standby');
+    updateMicButton(listening) {
+        const micBtn = document.getElementById('btnVoiceToggle');
+        if (micBtn) {
+            micBtn.classList.toggle('listening', listening);
         }
     }
 
-    /**
-     * Synthesize Jarvis's spoken vocal response
-     */
-    speak(text, onComplete) {
+    setFeedback(msg) {
+        const caption = document.getElementById('speechFeedbackText');
+        if (caption) caption.textContent = msg;
+    }
+
+    speak(text, onStart, onEnd) {
         if (!this.synthesis) {
-            if (onComplete) onComplete();
+            if (onEnd) onEnd();
             return;
         }
 
-        // Cancel previous utterances
         this.synthesis.cancel();
 
-        // Strip markdown stars or special tags for clean pronunciation
+        // Remove markdown or bracket characters for clean speech
         const cleanText = text.replace(/[*_#`~[\]]/g, '').trim();
-
         const utterance = new SpeechSynthesisUtterance(cleanText);
+
         if (this.selectedVoice) {
             utterance.voice = this.selectedVoice;
         }
-        utterance.rate = this.speechRate;
-        utterance.pitch = this.speechPitch;
+        utterance.rate = this.config.voiceRate || 1.0;
+        utterance.pitch = this.config.voicePitch || 1.0;
 
         utterance.onstart = () => {
-            if (window.jarvisVisualizer) window.jarvisVisualizer.setState('speaking');
-            this.updateFeedback(`Transmitting vocal response...`);
+            this.setFeedback('Transmitting vocal response...');
+            if (onStart) onStart();
         };
 
         utterance.onend = () => {
-            if (window.jarvisVisualizer) window.jarvisVisualizer.setState('standby');
-            this.updateFeedback(`Vocal telemetry standing by...`);
-            if (onComplete) onComplete();
+            this.setFeedback('Vocal telemetry standing by...');
+            if (onEnd) onEnd();
         };
 
         utterance.onerror = (e) => {
             console.warn('Speech synthesis error:', e);
-            if (window.jarvisVisualizer) window.jarvisVisualizer.setState('standby');
-            if (onComplete) onComplete();
+            if (onEnd) onEnd();
         };
 
         this.synthesis.speak(utterance);
     }
-
-    updateFeedback(msg) {
-        const caption = document.getElementById('speechFeedbackText');
-        if (caption) {
-            caption.textContent = msg;
-        }
-    }
 }
-
-// Global Speech Engine Instance
-window.jarvisSpeech = new JarvisSpeechEngine();

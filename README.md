@@ -62,17 +62,37 @@ You can click the **Arc Reactor** or the **Microphone** button and speak any of 
 
 ---
 
-## 📁 File Structure
+## 📁 MVC Architecture File Structure
 
 ```
-Shark-Techs-collab/
-├── index.html            # Main Stark HUD semantic layout & modal containers
-├── styles.css            # Sci-Fi Glassmorphism, neon styling & theme matrices
-├── README.md             # Documentation & instructions
+Shark-Techs/
+├── index.html                    # Main Stark HUD semantic layout & modal containers
+├── styles.css                    # Sci-Fi Glassmorphism, neon styling & theme matrices
+├── .env                          # Environment secrets (Groq API Key, Default Provider & Model)
+├── env.js                        # Client environment injector
+├── README.md                     # Documentation & cheatsheets
 └── js/
-    ├── sound.js          # Procedural Web Audio API sound synthesis
-    ├── visualizer.js     # Canvas Arc Reactor multi-ring & waveform animations
-    ├── speech.js         # Web Speech API recognition & vocal synthesis
-    ├── agent.js          # Jarvis NLP cognitive intent parser & LLM bridge
-    └── app.js            # Main application controller & telemetry monitors
+    ├── app.js                    # Application bootstrapper
+    ├── models/                   # Model Layer (State, Persistence & APIs)
+    │   ├── ConfigModel.js        # API credentials, provider configurations, preferences
+    │   ├── DirectiveModel.js     # Mission directives (tasks) & tactical scratchpad storage
+    │   ├── TelemetryModel.js     # Live sensors (Battery, Network, Weather API, Diagnostics)
+    │   ├── ConversationModel.js  # Holographic feed & multi-turn contextual memory buffer
+    │   └── AgentModel.js         # Cognitive intent engine & Groq LPU / OpenAI API gateway
+    ├── views/                    # View Layer (DOM Presentation, Canvas & Web APIs)
+    │   ├── AudioView.js          # Procedural Web Audio API sound synthesis (clicks, sirens, pings)
+    │   ├── VisualizerView.js     # Canvas Arc Reactor multi-ring & audio waveform render loop
+    │   ├── SpeechView.js         # Web Speech recognition & authentic British voice synthesis
+    │   ├── HudView.js            # Header telemetry, digital clock, uptime, armor theme matrix
+    │   ├── TelemetryView.js      # Battery gauges, network monitor, weather card, system logs
+    │   ├── ConversationView.js   # Transmission feed rendering & auto-scroll
+    │   ├── DirectiveView.js      # Mission directives interactive checklist & scratchpad
+    │   └── SettingsModalView.js  # Settings modal controls, model selectors, API key inputs
+    └── controllers/              # Controller Layer (Event Dispatch & Coordination)
+        ├── DirectiveController.js# Task form, directive toggles, deletions & note saves
+        ├── TelemetryController.js# Sensor timers, protocols, theme buttons & weather queries
+        ├── SettingsController.js # Settings modal lifecycle, model switches & credentials
+        ├── AgentController.js    # Voice/text command intake, LLM dispatch & vocal delivery
+        └── AppController.js      # Master MVC orchestrator & lifecycle initializer
 ```
+
