@@ -33,6 +33,12 @@ class JarvisAppController {
         this.setupBatteryMonitor();
         this.setupNetworkMonitor();
 
+        // Setup PWA, Cross-Device Sync, Workflows and Mobile Navigation
+        this.setupPwaAndSync();
+        this.setupWorkflowPresets();
+        this.setupMobileNav();
+        this.checkUrlSyncHash();
+
         // Start clock & uptime timer
         this.startTimers();
 
@@ -841,6 +847,305 @@ class JarvisAppController {
         this.loadTasks();
         this.loadSettings();
         if (window.jarvisSound) window.jarvisSound.playClick();
+    }
+
+    /* ==========================================================================
+       PWA, CROSS-DEVICE SYNC & SHARING
+       ========================================================================== */
+    setupPwaAndSync() {
+        // 1. Service Worker Registration
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('./sw.js')
+                .then(() => console.log('J.A.R.V.I.S. PWA Service Worker Registered.'))
+                .catch(err => console.warn('PWA Service Worker registration warning:', err));
+        }
+
+        // 2. Capture beforeinstallprompt for PWA native install
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            this.deferredInstallPrompt = e;
+            const btnInstall = document.getElementById('btnInstallPwa');
+            if (btnInstall) {
+                btnInstall.textContent = '⚡ INSTALL AS NATIVE APP';
+            }
+        });
+
+        // 3. Sync Modal Controls
+        const btnCrossDevice = document.getElementById('btnCrossDevice');
+        const btnCloseSync = document.getElementById('btnCloseSync');
+        const btnCloseSyncFooter = document.getElementById('btnCloseSyncFooter');
+        const syncModal = document.getElementById('syncModal');
+        const syncBackdrop = document.getElementById('syncModalBackdrop');
+
+        const openSync = () => {
+            if (syncModal) {
+                syncModal.classList.add('active');
+                syncModal.setAttribute('aria-hidden', 'false');
+                if (window.jarvisSound) window.jarvisSound.playClick();
+            }
+        };
+
+        const closeSync = () => {
+            if (syncModal) {
+                syncModal.classList.remove('active');
+                syncModal.setAttribute('aria-hidden', 'true');
+                if (window.jarvisSound) window.jarvisSound.playClick();
+            }
+        };
+
+        if (btnCrossDevice) btnCrossDevice.addEventListener('click', openSync);
+        if (btnCloseSync) btnCloseSync.addEventListener('click', closeSync);
+        if (btnCloseSyncFooter) btnCloseSyncFooter.addEventListener('click', closeSync);
+        if (syncBackdrop) syncBackdrop.addEventListener('click', closeSync);
+
+        // 4. Install PWA Button Click
+        const btnInstallPwa = document.getElementById('btnInstallPwa');
+        if (btnInstallPwa) {
+            btnInstallPwa.addEventListener('click', async () => {
+                if (this.deferredInstallPrompt) {
+                    this.deferredInstallPrompt.prompt();
+                    const choice = await this.deferredInstallPrompt.userChoice;
+                    if (choice.outcome === 'accepted') {
+                        if (window.jarvisAgent) window.jarvisAgent.appendTelemetryLog('PWA Installation accepted.');
+                    }
+                    this.deferredInstallPrompt = null;
+                } else {
+                    alert('To install Harsh\'s AI Agent:\n\n• On Chrome/Edge: Click the install icon (⊕) in the browser address bar.\n• On iOS (Safari): Tap Share ➔ "Add to Home Screen".\n• On Android: Tap Chrome Menu (⋮) ➔ "Install app" or "Add to Home screen".');
+                }
+            });
+        }
+
+        // 5. Export State (JSON Download)
+        const btnExport = document.getElementById('btnExportState');
+        if (btnExport) {
+            btnExport.addEventListener('click', () => {
+                this.exportWorkspaceState();
+            });
+        }
+
+        // 6. Import State (File Upload)
+        const btnTriggerImport = document.getElementById('btnTriggerImport');
+        const inputImport = document.getElementById('inputImportFile');
+        if (btnTriggerImport && inputImport) {
+            btnTriggerImport.addEventListener('click', () => inputImport.click());
+            inputImport.addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = (evt) => {
+                        this.importWorkspaceState(evt.target.result);
+                    };
+                    reader.readAsText(file);
+                }
+            });
+        }
+
+        // 7. Native Web Share
+        const btnNativeShare = document.getElementById('btnNativeShare');
+        if (btnNativeShare) {
+            btnNativeShare.addEventListener('click', () => {
+                this.triggerNativeShare();
+            });
+        }
+
+        // 8. Copy Sync Link
+        const btnCopyLink = document.getElementById('btnCopySyncLink');
+        if (btnCopyLink) {
+            btnCopyLink.addEventListener('click', () => {
+                this.copySyncLink();
+            });
+        }
+    }
+
+    exportWorkspaceState() {
+        const state = {
+            version: '4.2',
+            user: this.getUserName(),
+            theme: this.activeTheme,
+            tasks: this.tasks,
+            notes: localStorage.getItem('jarvis_notes') || '',
+            location: localStorage.getItem('jarvis_real_location'),
+            timestamp: new Date().toISOString()
+        };
+
+        const jsonStr = JSON.stringify(state, null, 2);
+        const blob = new Blob([jsonStr], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `harsh_jarvis_backup_${Date.now()}.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+
+        if (window.jarvisSound) window.jarvisSound.playProcessComplete();
+        if (window.jarvisAgent) {
+            window.jarvisAgent.appendTelemetryLog(`Workspace state exported (${this.tasks.length} tasks, scratchpad notes).`);
+        }
+    }
+
+    importWorkspaceState(jsonString) {
+        try {
+            const data = JSON.parse(jsonString);
+            if (data.user) {
+                localStorage.setItem('jarvis_username', data.user);
+            }
+            if (Array.isArray(data.tasks)) {
+                this.tasks = data.tasks;
+                this.saveTasksToStorage();
+                this.renderTasks();
+            }
+            if (data.notes) {
+                localStorage.setItem('jarvis_notes', data.notes);
+                this.loadNotes();
+            }
+            if (data.theme) {
+                this.setTheme(data.theme);
+            }
+
+            this.updateFooterAndHeaderLabels();
+            if (window.jarvisSound) window.jarvisSound.playProcessComplete();
+            if (window.jarvisAgent) {
+                window.jarvisAgent.appendMessage('jarvis', `Workspace state successfully imported and synchronized across devices for ${this.getUserName()}.`);
+                if (window.jarvisSpeech) {
+                    window.jarvisSpeech.speak(`Workspace synchronized successfully.`);
+                }
+            }
+            this.flashStatus('SYNC COMPLETE', '#00ff88');
+        } catch (err) {
+            alert('Failed to parse workspace backup file. Please ensure it is valid JSON.');
+        }
+    }
+
+    triggerNativeShare() {
+        const pending = this.tasks.filter(t => !t.completed).map(t => `• ${t.text}`).join('\n');
+        const shareData = {
+            title: "Harsh's AI Agent — Directives & Briefing",
+            text: `J.A.R.V.I.S. Directives for ${this.getUserName()}:\n\n${pending || 'No pending tasks.'}\n\nNotes:\n${localStorage.getItem('jarvis_notes') || 'No notes.'}`,
+            url: window.location.href
+        };
+
+        if (navigator.share) {
+            navigator.share(shareData).then(() => {
+                if (window.jarvisAgent) window.jarvisAgent.appendTelemetryLog('Native Web Share dispatched across apps.');
+            }).catch(() => {});
+        } else {
+            navigator.clipboard.writeText(shareData.text).then(() => {
+                this.flashStatus('COPIED TO CLIPBOARD', '#ffc837');
+                alert('Web Share is not supported in this browser viewport. Task directives have been copied to your clipboard instead.');
+            });
+        }
+    }
+
+    copySyncLink() {
+        try {
+            const syncPayload = {
+                u: this.getUserName(),
+                t: this.tasks.map(t => ({ id: t.id, text: t.text, completed: t.completed }))
+            };
+            const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(syncPayload))));
+            const syncUrl = `${window.location.origin}${window.location.pathname}#sync=${encoded}`;
+
+            navigator.clipboard.writeText(syncUrl).then(() => {
+                this.flashStatus('SYNC LINK COPIED', '#00f0ff');
+                if (window.jarvisSound) window.jarvisSound.playProcessComplete();
+                alert(`Sync URL copied to clipboard!\n\nOpen this link on your phone or other device to transfer your active tasks instantly.`);
+            });
+        } catch (e) {
+            alert('Could not generate sync URL.');
+        }
+    }
+
+    checkUrlSyncHash() {
+        if (window.location.hash && window.location.hash.startsWith('#sync=')) {
+            try {
+                const raw = window.location.hash.replace('#sync=', '');
+                const jsonStr = decodeURIComponent(escape(atob(raw)));
+                const data = JSON.parse(jsonStr);
+                if (data.t && Array.isArray(data.t)) {
+                    this.tasks = data.t;
+                    this.saveTasksToStorage();
+                    this.renderTasks();
+                }
+                if (data.u) {
+                    localStorage.setItem('jarvis_username', data.u);
+                    this.updateFooterAndHeaderLabels();
+                }
+                history.replaceState(null, '', window.location.pathname);
+                if (window.jarvisAgent) {
+                    window.jarvisAgent.appendMessage('jarvis', `Directives synchronized from cross-device share link, ${this.getUserName()}.`);
+                }
+            } catch (e) {
+                console.warn('URL sync hash invalid:', e);
+            }
+        }
+    }
+
+    /* ==========================================================================
+       WORKFLOW PRESETS CONTROLLER
+       ========================================================================== */
+    setupWorkflowPresets() {
+        document.querySelectorAll('.wf-preset-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const preset = btn.getAttribute('data-preset');
+                if (!window.jarvisWorkflow) return;
+
+                if (window.jarvisSound) window.jarvisSound.playClick();
+
+                let goal = '';
+                if (preset === 'morning') {
+                    goal = 'Plan my day with morning briefing, calendar event and task directives';
+                } else if (preset === 'research') {
+                    goal = 'Research Artificial Intelligence and draft summary email';
+                } else if (preset === 'audit') {
+                    goal = 'Audit system health, inspect hardware telemetry, and export markdown report';
+                }
+
+                if (goal) {
+                    window.jarvisWorkflow.createPlan(goal).then(plan => {
+                        window.jarvisWorkflow.executeWorkflow(plan);
+                    });
+                }
+            });
+        });
+    }
+
+    /* ==========================================================================
+       MOBILE VIEWPORT NAVIGATION (< 820px)
+       ========================================================================== */
+    setupMobileNav() {
+        const navBtns = document.querySelectorAll('.mobile-nav-btn');
+        if (!navBtns || navBtns.length === 0) return;
+
+        navBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                navBtns.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+
+                const target = btn.getAttribute('data-target');
+                const panels = document.querySelectorAll('.hud-main-grid .hud-panel');
+                panels.forEach(p => {
+                    if (p.classList.contains(target)) {
+                        p.classList.remove('panel-hidden');
+                    } else {
+                        p.classList.add('panel-hidden');
+                    }
+                });
+
+                if (navigator.vibrate) {
+                    navigator.vibrate(15);
+                }
+                if (window.jarvisSound) window.jarvisSound.playClick();
+            });
+        });
+
+        if (window.innerWidth <= 820) {
+            const leftPanel = document.querySelector('.left-panel');
+            const rightPanel = document.querySelector('.right-panel');
+            if (leftPanel) leftPanel.classList.remove('panel-hidden');
+            if (rightPanel) rightPanel.classList.add('panel-hidden');
+        }
     }
 
     escapeHTML(str) {

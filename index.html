@@ -10,6 +10,13 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=Rajdhani:wght@400;500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
+    <!-- PWA & Cross-Device Manifest -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#00f0ff">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Harsh AI Agent">
 </head>
 <body class="theme-cyan scanlines-active">
     <!-- Ambient Background Grid & Glow Overlay -->
@@ -50,6 +57,12 @@
                     <span id="hudTime" class="time-display">00:00:00</span>
                     <span id="hudDate" class="date-display">OCT 15, 2026</span>
                 </div>
+                <button id="btnCrossDevice" class="hud-btn-icon" title="Cross-Device Sync & Install PWA" aria-label="Cross-Device Sync">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect>
+                        <line x1="12" y1="18" x2="12.01" y2="18"></line>
+                    </svg>
+                </button>
                 <button id="btnSettings" class="hud-btn-icon" title="System Configuration" aria-label="Settings">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <circle cx="12" cy="12" r="3"></circle>
@@ -255,6 +268,39 @@
                 </div>
 
                 <div class="panel-content scrollable">
+                    <!-- Autonomous Multi-Step Workflows Across Apps -->
+                    <div class="hud-widget workflow-hud-widget">
+                        <div class="widget-header">
+                            <span class="sub-heading">AUTONOMOUS WORKFLOWS</span>
+                            <span class="wf-status-pill" id="wfHeaderPill">MULTI-APP ENGINE</span>
+                        </div>
+
+                        <!-- Stepper / Execution Pipeline Container -->
+                        <div id="workflowWidget" class="workflow-stepper-box">
+                            <div class="wf-empty-state">
+                                <span class="wf-empty-icon">⚡</span>
+                                <p>No active workflow running.</p>
+                                <small>Pick a preset below or type <em>"Workflow: [goal]"</em></small>
+                            </div>
+                        </div>
+
+                        <!-- Preset Quick-Trigger Multi-Step Workflows -->
+                        <div class="workflow-presets-grid">
+                            <button class="wf-preset-btn" data-preset="morning" title="Weather + Directives + Scratchpad + Calendar .ICS">
+                                <span class="preset-icon">🌅</span>
+                                <span class="preset-label">Day Plan</span>
+                            </button>
+                            <button class="wf-preset-btn" data-preset="research" title="Knowledge Lookup + Notes + Email Draft">
+                                <span class="preset-icon">🔍</span>
+                                <span class="preset-label">Research</span>
+                            </button>
+                            <button class="wf-preset-btn" data-preset="audit" title="Hardware Telemetry + Diagnostics + Markdown Report">
+                                <span class="preset-icon">🛡️</span>
+                                <span class="preset-label">Sys Audit</span>
+                            </button>
+                        </div>
+                    </div>
+
                     <!-- Weather & Environment Widget -->
                     <div class="hud-widget weather-widget">
                         <div class="widget-header">
@@ -329,6 +375,22 @@
                 <span class="hud-tag">CORES: <span id="footerCores">DETECTING...</span></span>
             </div>
         </footer>
+
+        <!-- Mobile Bottom Viewport Switcher (Thumb Navigation for Phones & Tablets) -->
+        <nav class="mobile-hud-nav" id="mobileNav" aria-label="Mobile Viewport Navigation">
+            <button class="mobile-nav-btn active" data-target="left-panel">
+                <span class="nav-icon">📊</span>
+                <span class="nav-label">Telemetry</span>
+            </button>
+            <button class="mobile-nav-btn" data-target="center-panel">
+                <span class="nav-icon">⚛️</span>
+                <span class="nav-label">Jarvis Core</span>
+            </button>
+            <button class="mobile-nav-btn" data-target="right-panel">
+                <span class="nav-icon">📋</span>
+                <span class="nav-label">Directives</span>
+            </button>
+        </nav>
     </div>
 
     <!-- Settings & API Key Configuration Modal -->
@@ -416,11 +478,59 @@
         </div>
     </div>
 
+    <!-- Cross-Device Sync & PWA Mobile Modal -->
+    <div class="hud-modal" id="syncModal" aria-hidden="true">
+        <div class="modal-backdrop" id="syncModalBackdrop"></div>
+        <div class="modal-window">
+            <div class="panel-corner corner-tl"></div>
+            <div class="panel-corner corner-tr"></div>
+            <div class="panel-corner corner-bl"></div>
+            <div class="panel-corner corner-br"></div>
+
+            <div class="modal-header">
+                <h3 class="modal-title">CROSS-DEVICE SYNCHRONIZATION & APP INSTALL</h3>
+                <button id="btnCloseSync" class="modal-close-btn" aria-label="Close Sync Modal">&times;</button>
+            </div>
+
+            <div class="modal-body">
+                <div class="sync-card">
+                    <div class="sync-card-title">📱 Native Device Installation (PWA)</div>
+                    <p class="sync-card-desc">Install Harsh's AI Agent as a standalone application on Android, iPhone/iPad, Windows, or macOS for instant access and offline caching.</p>
+                    <button id="btnInstallPwa" class="hud-btn primary full-width">INSTALL STANDALONE APP</button>
+                </div>
+
+                <div class="sync-card">
+                    <div class="sync-card-title">💾 Backup & Cross-Device State Transfer</div>
+                    <p class="sync-card-desc">Export your active task directives, scratchpad notes, workflows, and settings to a portable JSON file, or restore onto a new device.</p>
+                    <div class="sync-actions-row">
+                        <button id="btnExportState" class="hud-btn secondary">EXPORT WORKSPACE (.JSON)</button>
+                        <button id="btnTriggerImport" class="hud-btn secondary">IMPORT WORKSPACE</button>
+                        <input type="file" id="inputImportFile" accept=".json" style="display: none;">
+                    </div>
+                </div>
+
+                <div class="sync-card">
+                    <div class="sync-card-title">🔗 Quick Share & Native Mobile Uplink</div>
+                    <p class="sync-card-desc">Push your latest research notes or active directives directly to WhatsApp, Slack, Apple Notes, or Email using the Web Share API.</p>
+                    <div class="sync-actions-row">
+                        <button id="btnNativeShare" class="hud-btn secondary">NATIVE WEB SHARE</button>
+                        <button id="btnCopySyncLink" class="hud-btn secondary">COPY SYNC URL</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button id="btnCloseSyncFooter" class="hud-btn primary">DONE</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Environment & Modular Scripts -->
     <script src="env.js"></script>
     <script src="js/sound.js"></script>
     <script src="js/visualizer.js"></script>
     <script src="js/speech.js"></script>
+    <script src="js/workflow.js"></script>
     <script src="js/agent.js"></script>
     <script src="js/app.js"></script>
 </body>

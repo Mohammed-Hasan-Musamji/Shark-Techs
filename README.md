@@ -18,6 +18,30 @@
   - **Speech Synthesis (`SpeechSynthesis`)**: Refined British vocal synthesis matching the classic Jarvis persona (with adjustable pitch & speed).
   - **Procedural Sound Engine (`Web Audio API`)**: Generates authentic UI chimes, power sweeps, alerts, and clicks entirely in-browser without external audio assets.
 
+- **Multi-Step Autonomous Workflow Engine Across Apps**:
+  - **Cross-App Tool Execution**: Automatically executes actions across browser capabilities and web services:
+    - `search_knowledge`: Real-time topic research via live Wikipedia API queries.
+    - `live_weather`: Queries live Open-Meteo atmospheric sensors for detected or specified cities.
+    - `task_directives`: Dynamically manages, adds, and prioritizes mission tasks.
+    - `scratchpad_notes`: Formats and appends findings to the tactical scratchpad.
+    - `email_draft`: Prepares email drafts, copies to clipboard, and triggers native mail clients via `mailto:`.
+    - `calendar_event`: Generates standard `.ics` (iCalendar RFC 5545) event files and triggers instant schedule download.
+    - `file_export`: Generates and exports downloadable Markdown (`.md`) or text reports.
+    - `system_notification`: Dispatches native desktop and mobile push notifications.
+    - `web_share`: Native Web Share integration to send findings directly to WhatsApp, Slack, Notes, or Gmail.
+  - **Dynamic Planner & Decomposer**: Automatically deconstructs natural language goals (e.g. *"Plan my day with morning briefing and calendar event"*, *"Research AI agents and draft summary email"*) into ordered steps with parameter validation.
+
+- **Failure Recognition & Auto-Healing Pipeline**:
+  - **Taxonomy Failure Detection**: Recognizes timeouts (12s abort limit), HTTP 4xx/5xx errors, browser permission blocks, and network offline conditions.
+  - **Self-Healing Fallbacks**: Automatically engages fallback strategies (e.g., cached weather on geocoding error, scratchpad draft if email popup blocked, visual HUD alert if push notification denied).
+  - **Step Recovery UI**: If retries are exhausted, displays interactive **RETRY** and **SKIP** controls in the HUD with audio alerts.
+
+- **Works Across Devices (Mobile, Tablet, Desktop)**:
+  - **PWA (Progressive Web App)**: Installable as a native standalone app on Android, iOS (Safari Add to Home Screen), Windows, and macOS.
+  - **Service Worker (`sw.js`)**: Caches core assets for instant loading and offline resilience.
+  - **Mobile Thumb Navigation**: Adaptive bottom HUD navigation bar on screen widths `< 820px` to switch between Telemetry, Jarvis Core, and Directives.
+  - **Cross-Device State Sync**: One-click JSON workspace backup/restore, plus instant QR/URL sync link generation.
+
 - **Autonomous Agent Skills & Intent Engine**:
   - **Real Atmospheric Location & Weather**: Dynamically detects the user's real geographic location via IP geolocation / HTML5 geolocation and fetches live real-time conditions (temperature, feels-like, humidity, wind speed) from Open-Meteo.
   - **Real Hardware Telemetry**: Monitors actual logical CPU cores (`navigator.hardwareConcurrency`), real round-trip network ping latency, real battery status or desktop AC power (`navigator.getBattery()`), and operating system platform.

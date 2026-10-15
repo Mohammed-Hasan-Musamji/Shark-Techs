@@ -221,6 +221,33 @@ You have direct access to this real live telemetry. If ${this.userName} asks abo
         if (window.jarvisSound) window.jarvisSound.playClick();
         if (window.jarvisVisualizer) window.jarvisVisualizer.setState('processing');
 
+        // Check if command is a multi-step autonomous workflow across apps
+        const qLower = input.toLowerCase();
+        const isWorkflowRequest = 
+            qLower.startsWith('workflow:') || 
+            qLower.startsWith('run workflow') || 
+            qLower.startsWith('multi-step') || 
+            qLower.startsWith('goal:') || 
+            qLower.includes('plan my day') || 
+            qLower.includes('morning briefing') || 
+            (qLower.includes('research') && (qLower.includes('email') || qLower.includes('notes') || qLower.includes('export'))) ||
+            (qLower.includes('audit') && qLower.includes('system'));
+
+        if (isWorkflowRequest && window.jarvisWorkflow) {
+            const cleanGoal = input.replace(/^(workflow:|run workflow:?|goal:|multi-step:?)/i, '').trim();
+            this.appendTelemetryLog(`[ORCHESTRATOR] Initiating multi-step workflow: "${cleanGoal}"`);
+            
+            // Decompose and execute asynchronously
+            window.jarvisWorkflow.createPlan(cleanGoal).then(plan => {
+                window.jarvisWorkflow.executeWorkflow(plan);
+            }).catch(err => {
+                this.deliverResponse(`Workflow planning failed, ${this.userName}: ${err.message}`);
+            });
+
+            this.deliverResponse(`Autonomous multi-step execution initialized for: "${cleanGoal}". Monitoring step outcomes across apps.`);
+            return;
+        }
+
         // Check if command is a strict DOM/hardware action (theme change, task addition, mute, protocols)
         const directAction = this.handleDirectUiActions(input);
         if (directAction) {
