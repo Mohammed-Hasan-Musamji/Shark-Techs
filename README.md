@@ -78,16 +78,18 @@ Shark-Techs/
     │   ├── DirectiveModel.js     # Mission directives (tasks) & tactical scratchpad storage
     │   ├── TelemetryModel.js     # Live sensors (Battery, Network, Weather API, Diagnostics)
     │   ├── ConversationModel.js  # Holographic feed & multi-turn contextual memory buffer
-    │   └── AgentModel.js         # Cognitive intent engine & Groq LPU / OpenAI API gateway
+    │   ├── SystemBridgeModel.js  # Computer OS controls, bridge APIs & mobile telemetry
+    │   └── AgentModel.js         # Cognitive intent engine, Groq LPU & autonomous action caller
     ├── views/                    # View Layer (DOM Presentation, Canvas & Web APIs)
     │   ├── AudioView.js          # Procedural Web Audio API sound synthesis (clicks, sirens, pings)
     │   ├── VisualizerView.js     # Canvas Arc Reactor multi-ring & audio waveform render loop
     │   ├── SpeechView.js         # Web Speech recognition & authentic British voice synthesis
     │   ├── HudView.js            # Header telemetry, digital clock, uptime, armor theme matrix
-    │   ├── TelemetryView.js      # Battery gauges, network monitor, weather card, system logs
+    │   ├── TelemetryView.js      # Real CPU/RAM gauges, network monitor, weather card, logs
     │   ├── ConversationView.js   # Transmission feed rendering & auto-scroll
     │   ├── DirectiveView.js      # Mission directives interactive checklist & scratchpad
-    │   └── SettingsModalView.js  # Settings modal controls, model selectors, API key inputs
+    │   ├── SettingsModalView.js  # Settings modal controls, model selectors, API key inputs
+    │   └── MobileConnectView.js  # Mobile QR uplink, device detector, remote triggers & screenshots
     └── controllers/              # Controller Layer (Event Dispatch & Coordination)
         ├── DirectiveController.js# Task form, directive toggles, deletions & note saves
         ├── TelemetryController.js# Sensor timers, protocols, theme buttons & weather queries
@@ -95,4 +97,41 @@ Shark-Techs/
         ├── AgentController.js    # Voice/text command intake, LLM dispatch & vocal delivery
         └── AppController.js      # Master MVC orchestrator & lifecycle initializer
 ```
+
+---
+
+## 📱 Connecting From Your Mobile Phone
+
+1. **Ensure your phone is on the same Wi-Fi network** as your computer.
+2. In the JARVIS HUD header, click the **📱 CONNECT PHONE** button.
+3. **Scan the holographic QR Code** with your phone's camera app, or enter the network link in your mobile browser:
+   ```
+   http://192.168.143.209:9000
+   ```
+4. Once connected, your phone functions as a **remote handheld JARVIS satellite controller**. You can tap the microphone or Arc Reactor on your phone and speak commands to control your computer.
+5. **Away from home?** Click **ENGAGE REMOTE CELLULAR TUNNEL** to generate a secure public HTTPS link accessible from cellular data anywhere in the world.
+
+---
+
+## 🖥️ Computer Control Voice & Text Commands
+
+You can speak or type any of the following to command your PC:
+
+| Command | Action on Your Computer |
+| :--- | :--- |
+| *"Open Spotify"* / *"Play Spotify"* | Launches Spotify application on host console |
+| *"Open Notepad"* / *"Open notes"* | Launches Windows Notepad on screen |
+| *"Open Calculator"* | Deploys Windows Calculator unit |
+| *"Open Chrome"* / *"Open browser"* | Launches Google Chrome |
+| *"Open YouTube"* / *"Open GitHub"* | Navigates host browser to the destination |
+| *"Open VS Code"* / *"Open code"* | Opens Visual Studio Code editor |
+| *"Open files"* / *"Open explorer"* | Launches Windows File Explorer |
+| *"Open Task Manager"* | Opens Windows Task Manager |
+| *"Take a screenshot"* / *"Capture screen"* | Captures primary display and streams preview to phone/PC |
+| *"Mute PC"* / *"Unmute PC"* | Toggles host audio mute |
+| *"Volume up"* / *"Volume down"* | Adjusts computer master volume |
+| *"Lock computer"* / *"Lock screen"* | Locks Windows workstation instantly |
+| *"What is my CPU and RAM?"* | Reports real host CPU load and memory usage |
+| *"Run command: [powershell command]"* | Executes command on host and returns output |
+
 

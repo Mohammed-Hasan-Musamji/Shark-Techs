@@ -42,6 +42,10 @@
             </div>
 
             <div class="header-right">
+                <button id="btnMobileUplink" class="hud-ai-pill mobile-uplink-pill" title="Connect Phone via Wi-Fi QR Code & Satellite Link" aria-label="Mobile Uplink">
+                    <span class="ai-pill-icon">📱</span>
+                    <span class="ai-pill-text">CONNECT PHONE</span>
+                </button>
                 <button id="btnAiCoreStatus" class="hud-ai-pill" title="Configure AI Intelligence Core (Groq / OpenAI)" aria-label="AI Core">
                     <span class="ai-pill-icon">⚡</span>
                     <span id="aiCoreLabel" class="ai-pill-text">AI: GROQ / OPENAI</span>
@@ -416,6 +420,87 @@
         </div>
     </div>
 
+    <!-- Mobile Satellite Uplink & QR Code Modal -->
+    <div id="mobileUplinkModal" class="hud-modal" role="dialog" aria-modal="true" aria-hidden="true">
+        <div class="modal-card uplink-card">
+            <div class="modal-header">
+                <div class="modal-title-group">
+                    <span class="modal-icon">📱</span>
+                    <h2 class="modal-title">SATELLITE MOBILE UPLINK</h2>
+                </div>
+                <button id="btnCloseMobileUplink" class="modal-close" aria-label="Close Mobile Uplink">&times;</button>
+            </div>
+
+            <div class="modal-body">
+                <div class="uplink-badge-container">
+                    <span id="deviceTypeBadge" class="device-badge desktop-mode">💻 HOST WORKSTATION CONSOLE</span>
+                </div>
+
+                <div class="qr-code-wrapper">
+                    <div class="qr-frame">
+                        <img id="qrCodeImage" alt="Scan with Phone Camera to Connect" src="" />
+                        <div class="qr-scanline"></div>
+                    </div>
+                    <div class="qr-instructions">
+                        <p class="qr-step-title">Scan With Your Phone Camera</p>
+                        <p class="qr-step-desc">Connect your phone to the same Wi-Fi, scan the QR code to open JARVIS, and command your computer remotely via voice or touch.</p>
+                    </div>
+                </div>
+
+                <div class="setting-group">
+                    <label class="setting-label">Local Wi-Fi Network Access Link</label>
+                    <div class="url-copy-box">
+                        <span id="mobileUrlDisplay" class="url-text">http://192.168.143.209:9000</span>
+                        <button id="btnCopyMobileUrl" class="hud-btn secondary sm">COPY LINK</button>
+                    </div>
+                </div>
+
+                <div class="setting-group" id="remoteTunnelContainer">
+                    <label class="setting-label">Remote Cellular Access (Outside Home Wi-Fi)</label>
+                    <div class="tunnel-box">
+                        <p id="tunnelStatusText" class="tunnel-status">Local Wi-Fi Only (Click below to generate public HTTPS link)</p>
+                        <button id="btnToggleTunnel" class="hud-btn primary sm">ENGAGE REMOTE CELLULAR TUNNEL</button>
+                    </div>
+                </div>
+
+                <div class="setting-group">
+                    <label class="setting-label">Quick Remote Computer Triggers</label>
+                    <div class="bridge-quick-grid">
+                        <button class="bridge-quick-btn" data-bridge-action="spotify">🎵 Spotify</button>
+                        <button class="bridge-quick-btn" data-bridge-action="notepad">📝 Notepad</button>
+                        <button class="bridge-quick-btn" data-bridge-action="chrome">🌐 Chrome</button>
+                        <button class="bridge-quick-btn" data-bridge-action="calc">🧮 Calculator</button>
+                        <button class="bridge-quick-btn" data-bridge-action="volume-mute">🔇 Mute PC</button>
+                        <button class="bridge-quick-btn" data-bridge-action="volume-up">🔊 Volume +</button>
+                        <button class="bridge-quick-btn" data-bridge-action="screenshot">📸 Screenshot</button>
+                        <button class="bridge-quick-btn" data-bridge-action="lock">🔒 Lock PC</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Live Screenshot Preview Modal -->
+    <div id="screenshotModal" class="hud-modal" role="dialog" aria-modal="true" aria-hidden="true">
+        <div class="modal-card screenshot-card">
+            <div class="modal-header">
+                <div class="modal-title-group">
+                    <span class="modal-icon">📸</span>
+                    <h2 class="modal-title">HOST DESKTOP DISPLAY BUFFER</h2>
+                </div>
+                <button id="btnCloseScreenshot" class="modal-close" aria-label="Close Screenshot Preview">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="screenshot-img-container">
+                    <img id="screenshotImagePreview" alt="Desktop Screenshot Preview" src="" />
+                </div>
+            </div>
+            <div class="modal-footer">
+                <a id="btnDownloadScreenshot" class="hud-btn primary" href="" download="screenshot.png">DOWNLOAD CAPTURE</a>
+            </div>
+        </div>
+    </div>
+
     <!-- Environment Config -->
     <script src="env.js"></script>
 
@@ -424,6 +509,7 @@
     <script src="js/models/DirectiveModel.js"></script>
     <script src="js/models/TelemetryModel.js"></script>
     <script src="js/models/ConversationModel.js"></script>
+    <script src="js/models/SystemBridgeModel.js"></script>
     <script src="js/models/AgentModel.js"></script>
 
     <!-- MVC Views -->
@@ -435,6 +521,7 @@
     <script src="js/views/ConversationView.js"></script>
     <script src="js/views/DirectiveView.js"></script>
     <script src="js/views/SettingsModalView.js"></script>
+    <script src="js/views/MobileConnectView.js"></script>
 
     <!-- MVC Controllers -->
     <script src="js/controllers/DirectiveController.js"></script>

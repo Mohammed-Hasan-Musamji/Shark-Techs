@@ -22,11 +22,13 @@ class AppController {
         this.models.directives = new DirectiveModel();
         this.models.telemetry = new TelemetryModel();
         this.models.conversation = new ConversationModel();
+        this.models.systemBridge = new SystemBridgeModel();
         this.models.agent = new AgentModel(
             this.models.config,
             this.models.directives,
             this.models.telemetry,
-            this.models.conversation
+            this.models.conversation,
+            this.models.systemBridge
         );
 
         // 2. Initialize Views (Presentation & DOM)
@@ -34,10 +36,11 @@ class AppController {
         this.views.visualizer = new VisualizerView(this.models.config);
         this.views.speech = new SpeechView(this.models.config);
         this.views.hud = new HudView(this.models.config, this.models.telemetry);
-        this.views.telemetry = new TelemetryView(this.models.telemetry);
+        this.views.telemetry = new TelemetryView(this.models.telemetry, this.models.systemBridge);
         this.views.conversation = new ConversationView(this.models.conversation);
         this.views.directives = new DirectiveView(this.models.directives);
         this.views.settingsModal = new SettingsModalView(this.models.config);
+        this.views.mobileConnect = new MobileConnectView(this.models.systemBridge, this.views.audio);
 
         // 3. Initialize Controllers (Event Dispatch & Coordination)
         this.controllers.directives = new DirectiveController(
@@ -71,7 +74,8 @@ class AppController {
             this.views.audio,
             this.models.telemetry,
             this.models.directives,
-            this.models.config
+            this.models.config,
+            this.models.systemBridge
         );
 
         // 4. Expose clean global namespace for console debugging and compatibility
@@ -80,6 +84,7 @@ class AppController {
         window.jarvisSpeech = this.views.speech;
         window.jarvisVisualizer = this.views.visualizer;
         window.jarvisSound = this.views.audio;
+        window.jarvisBridge = this.models.systemBridge;
         window.jarvisApp = this;
 
         // 5. System startup telemetry
@@ -88,6 +93,7 @@ class AppController {
         if (activeKey) {
             this.models.telemetry.appendLog(`[AI CORE] ${this.models.config.provider.toUpperCase()} LPU connected (${this.models.config.getActiveModel()}).`);
         }
+        this.models.telemetry.appendLog(`[BRIDGE] System control & mobile satellite uplink active.`);
 
         // 6. Initial Atmospheric Scan
         setTimeout(() => {

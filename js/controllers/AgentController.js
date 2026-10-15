@@ -6,7 +6,7 @@
  */
 
 class AgentController {
-    constructor(agentModel, conversationModel, conversationView, visualizerView, speechView, audioView, telemetryModel, directiveModel, configModel) {
+    constructor(agentModel, conversationModel, conversationView, visualizerView, speechView, audioView, telemetryModel, directiveModel, configModel, systemBridgeModel) {
         this.agent = agentModel;
         this.conversation = conversationModel;
         this.conversationView = conversationView;
@@ -16,6 +16,7 @@ class AgentController {
         this.telemetry = telemetryModel;
         this.directives = directiveModel;
         this.config = configModel;
+        this.systemBridge = systemBridgeModel;
 
         this.init();
     }
@@ -155,6 +156,31 @@ class AgentController {
         } else if (direct.action === 'clear_chat') {
             this.conversation.clear();
             this.audio.playProcessComplete();
+        } else if (direct.action === 'bridge_app') {
+            this.deliverResponse(direct.message);
+            if (this.systemBridge) await this.systemBridge.openApp(direct.app);
+        } else if (direct.action === 'bridge_url') {
+            this.deliverResponse(direct.message);
+            if (this.systemBridge) await this.systemBridge.openUrl(direct.url);
+        } else if (direct.action === 'bridge_volume') {
+            this.deliverResponse(direct.message);
+            if (this.systemBridge) await this.systemBridge.controlVolume(direct.volumeAction);
+        } else if (direct.action === 'bridge_screenshot') {
+            this.deliverResponse(direct.message);
+            if (this.systemBridge) await this.systemBridge.captureScreenshot();
+        } else if (direct.action === 'bridge_lock') {
+            this.deliverResponse(direct.message);
+            if (this.systemBridge) await this.systemBridge.lockWorkstation();
+        } else if (direct.action === 'bridge_exec') {
+            this.deliverResponse(direct.message);
+            if (this.systemBridge) {
+                const res = await this.systemBridge.executeTerminal(direct.command);
+                if (res.stdout) {
+                    this.conversation.addMessage('jarvis', `Output:\n\`\`\`powershell\n${res.stdout.substring(0, 400)}\n\`\`\``);
+                } else if (res.stderr) {
+                    this.conversation.addMessage('jarvis', `Error:\n\`\`\`\n${res.stderr}\n\`\`\``, true);
+                }
+            }
         } else if (direct.action === 'status') {
             this.deliverResponse(direct.message);
         } else if (direct.action === 'response') {

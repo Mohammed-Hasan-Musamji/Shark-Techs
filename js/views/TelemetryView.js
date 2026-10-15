@@ -6,8 +6,9 @@
  */
 
 class TelemetryView {
-    constructor(telemetryModel) {
+    constructor(telemetryModel, systemBridgeModel) {
         this.telemetry = telemetryModel;
+        this.bridge = systemBridgeModel;
 
         this.powerStatus = document.getElementById('powerStatus');
         this.powerBar = document.getElementById('powerBar');
@@ -35,6 +36,20 @@ class TelemetryView {
             if (type === 'log_appended') this.renderLog(data);
             if (type === 'logs_cleared') this.clearLogs();
         });
+
+        // Subscribe to Real System Bridge Telemetry
+        if (this.bridge) {
+            this.bridge.subscribe((type, data) => {
+                if (type === 'stats_updated') {
+                    if (this.coreLoad && data.cpuLoad !== undefined) {
+                        this.coreLoad.textContent = `${data.cpuLoad}% CPU | ${data.ramPercent}% RAM`;
+                    }
+                    if (this.coreLoadBar && data.cpuLoad !== undefined) {
+                        this.coreLoadBar.style.width = `${Math.min(100, Math.max(10, data.cpuLoad))}%`;
+                    }
+                }
+            });
+        }
     }
 
     renderBattery(battery) {
