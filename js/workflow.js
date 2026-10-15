@@ -89,6 +89,12 @@ class JarvisWorkflowEngine {
                 app: 'Hardware Telemetry Monitor',
                 description: 'Inspects real logical CPU cores, network latency, power, and OS platform.',
                 execute: async (params) => this.toolSystemDiagnostics(params)
+            },
+            {
+                id: 'device_app_launch',
+                app: 'Device App Launcher',
+                description: 'Smoothly launches native device apps like WhatsApp, Notepad, Calculator, VS Code, Spotify, etc.',
+                execute: async (params) => this.toolDeviceAppLaunch(params)
             }
         ];
     }
@@ -386,6 +392,19 @@ class JarvisWorkflowEngine {
             platform: platform,
             online: online,
             summary: `Platform: ${platform}, Cores: ${cores}, Memory: ${memory}, Network: ${online ? 'ONLINE' : 'OFFLINE'}`
+        };
+    }
+
+    async toolDeviceAppLaunch(params) {
+        const app = params.app || params.appName;
+        if (!app) throw new Error('Target device application name is required.');
+        if (!window.jarvisDevice) throw new Error('Device apps controller is not initialized.');
+
+        const resultMsg = window.jarvisDevice.launchApp(app, params);
+        return {
+            status: 'launched',
+            app: app,
+            message: resultMsg
         };
     }
 

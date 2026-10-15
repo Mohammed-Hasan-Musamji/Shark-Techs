@@ -150,16 +150,58 @@
                         </div>
                     </div>
 
+                    <!-- Device Apps & Launcher Deck -->
+                    <div class="device-apps-section">
+                        <div class="widget-header">
+                            <h3 class="sub-heading">DEVICE APPS & LAUNCHER</h3>
+                            <span class="device-pill" id="deviceOsPill">WINDOWS</span>
+                        </div>
+                        <div class="device-apps-grid">
+                            <button class="device-app-btn" data-app="whatsapp" title="Launch WhatsApp (Web or Desktop)">
+                                <span class="app-icon">💬</span>
+                                <span class="app-name">WhatsApp</span>
+                            </button>
+                            <button class="device-app-btn" data-app="notepad" title="Launch Desktop Notepad">
+                                <span class="app-icon">📝</span>
+                                <span class="app-name">Notepad</span>
+                            </button>
+                            <button class="device-app-btn" data-app="calculator" title="Launch Windows Calculator">
+                                <span class="app-icon">🔢</span>
+                                <span class="app-name">Calculator</span>
+                            </button>
+                            <button class="device-app-btn" data-app="vscode" title="Launch Visual Studio Code">
+                                <span class="app-icon">💻</span>
+                                <span class="app-name">VS Code</span>
+                            </button>
+                            <button class="device-app-btn" data-app="spotify" title="Launch Spotify Music">
+                                <span class="app-icon">🎵</span>
+                                <span class="app-name">Spotify</span>
+                            </button>
+                            <button class="device-app-btn" data-app="youtube" title="Launch YouTube">
+                                <span class="app-icon">▶️</span>
+                                <span class="app-name">YouTube</span>
+                            </button>
+                            <button class="device-app-btn" data-app="maps" title="Launch Google Maps">
+                                <span class="app-icon">🗺️</span>
+                                <span class="app-name">Maps</span>
+                            </button>
+                            <button class="device-app-btn" data-app="settings" title="Launch Windows Settings">
+                                <span class="app-icon">⚙️</span>
+                                <span class="app-name">Settings</span>
+                            </button>
+                        </div>
+                    </div>
+
                     <!-- Quick Voice Commands Cheat-sheet -->
                     <div class="voice-cheatsheet">
                         <h3 class="sub-heading">VOICE COMMANDS</h3>
                         <ul class="command-list">
+                            <li><span class="cmd-pill">"Open WhatsApp"</span> Launches WhatsApp</li>
+                            <li><span class="cmd-pill">"Open Notepad"</span> Desktop text editor</li>
+                            <li><span class="cmd-pill">"Open Calculator"</span> Windows Calculator</li>
                             <li><span class="cmd-pill">"What's the weather"</span> Live weather report</li>
-                            <li><span class="cmd-pill">"Tell me a joke"</span> AI programmer humor</li>
                             <li><span class="cmd-pill">"Add task: [action]"</span> Logs personal directive</li>
-                            <li><span class="cmd-pill">"System status"</span> Deep hardware scan</li>
-                            <li><span class="cmd-pill">"Theme [cyan/gold/emerald]"</span> Shift HUD armor</li>
-                            <li><span class="cmd-pill">"Clear logs"</span> Wipes transmission</li>
+                            <li><span class="cmd-pill">"Plan my day"</span> Multi-app workflow</li>
                         </ul>
                     </div>
 
@@ -525,11 +567,45 @@
         </div>
     </div>
 
+    <!-- Desktop Notepad HUD Workspace Modal -->
+    <div class="hud-modal" id="notepadModal" aria-hidden="true">
+        <div class="modal-backdrop" id="notepadModalBackdrop"></div>
+        <div class="modal-window notepad-window">
+            <div class="panel-corner corner-tl"></div>
+            <div class="panel-corner corner-tr"></div>
+            <div class="panel-corner corner-bl"></div>
+            <div class="panel-corner corner-br"></div>
+
+            <div class="modal-header notepad-header">
+                <div class="notepad-title-group">
+                    <span class="notepad-icon">📝</span>
+                    <h3 class="modal-title">DESKTOP NOTEPAD — J.A.R.V.I.S.</h3>
+                </div>
+                <div class="notepad-controls">
+                    <button id="btnSaveNotepadFile" class="mini-btn" title="Download as .txt">SAVE .TXT</button>
+                    <button id="btnCopyNotepad" class="mini-btn" title="Copy Content">COPY ALL</button>
+                    <button id="btnClearNotepad" class="mini-btn" title="Clear Content">CLEAR</button>
+                    <button id="btnCloseNotepad" class="modal-close-btn" aria-label="Close Notepad">&times;</button>
+                </div>
+            </div>
+
+            <div class="modal-body notepad-body">
+                <textarea id="desktopNotepadTextarea" class="notepad-textarea" placeholder="Start typing, take notes, or ask Jarvis: 'Open Notepad and write...'"></textarea>
+            </div>
+
+            <div class="notepad-footer">
+                <span id="notepadStatusBar" class="notepad-status">Lines: 1 | Words: 0 | Characters: 0 | UTF-8</span>
+                <span class="notepad-hint">Directly compatible with native Windows Notepad</span>
+            </div>
+        </div>
+    </div>
+
     <!-- Environment & Modular Scripts -->
     <script src="env.js"></script>
     <script src="js/sound.js"></script>
     <script src="js/visualizer.js"></script>
     <script src="js/speech.js"></script>
+    <script src="js/device.js"></script>
     <script src="js/workflow.js"></script>
     <script src="js/agent.js"></script>
     <script src="js/app.js"></script>

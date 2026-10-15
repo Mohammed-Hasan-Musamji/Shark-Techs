@@ -36,6 +36,16 @@
   - **Self-Healing Fallbacks**: Automatically engages fallback strategies (e.g., cached weather on geocoding error, scratchpad draft if email popup blocked, visual HUD alert if push notification denied).
   - **Step Recovery UI**: If retries are exhausted, displays interactive **RETRY** and **SKIP** controls in the HUD with audio alerts.
 
+- **Smooth Device Apps Opener & Native Launcher**:
+  - Directly launches and controls applications on your computer and mobile device:
+    - **WhatsApp**: Smoothly launches WhatsApp desktop/web with prefilled messages and contacts (`whatsapp://send?text=...`).
+    - **Notepad**: Opens a dedicated Desktop Notepad HUD workspace with word/line counts, `.txt` file downloads, and compatibility with native Windows Notepad.
+    - **Calculator**: Directly opens the native Windows Calculator app (`ms-calculator:`) with on-the-fly math calculation.
+    - **VS Code**: Launches Visual Studio Code (`vscode://`) on your device.
+    - **Spotify**: Opens Spotify desktop or web player with search queries (`spotify:search:...`).
+    - **YouTube & Google Maps**: Launches video and location viewports instantly.
+    - **Windows Settings, Paint & Clock**: Launches native Windows system utilities (`ms-settings:`, `ms-paint:`, `ms-clock:`).
+
 - **Works Across Devices (Mobile, Tablet, Desktop)**:
   - **PWA (Progressive Web App)**: Installable as a native standalone app on Android, iOS (Safari Add to Home Screen), Windows, and macOS.
   - **Service Worker (`sw.js`)**: Caches core assets for instant loading and offline resilience.

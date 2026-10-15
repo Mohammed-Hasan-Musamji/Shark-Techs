@@ -1840,3 +1840,154 @@ html, body {
     100% { box-shadow: 0 0 14px var(--alert-color); }
 }
 
+/* ==========================================================================
+   DEVICE APPS LAUNCHER DECK & DESKTOP NOTEPAD WORKSPACE
+   ========================================================================== */
+.device-apps-section {
+    margin-bottom: 16px;
+    background: rgba(4, 14, 28, 0.65);
+    border: 1px solid var(--primary-border);
+    border-radius: var(--border-radius-md);
+    padding: 12px;
+}
+
+.device-pill {
+    font-family: var(--font-display);
+    font-size: 9px;
+    letter-spacing: 1px;
+    color: var(--primary-glow);
+    padding: 2px 6px;
+    border-radius: 4px;
+    background: var(--primary-dim);
+    border: 1px solid var(--primary-border);
+}
+
+.device-apps-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 6px;
+    margin-top: 8px;
+}
+
+.device-app-btn {
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: var(--border-radius-sm);
+    padding: 8px 4px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.device-app-btn:hover {
+    background: var(--primary-dim);
+    border-color: var(--primary-glow);
+    color: var(--text-primary);
+    transform: translateY(-2px);
+    box-shadow: 0 0 12px rgba(0, 240, 255, 0.2);
+}
+
+.device-app-btn .app-icon {
+    font-size: 16px;
+}
+
+.device-app-btn .app-name {
+    font-family: var(--font-ui);
+    font-size: 10.5px;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+}
+
+/* DESKTOP NOTEPAD HUD MODAL */
+.notepad-window {
+    width: 90%;
+    max-width: 720px;
+    background: rgba(6, 12, 24, 0.95);
+    border: 1px solid var(--primary-glow);
+    box-shadow: var(--box-glow-intense);
+    display: flex;
+    flex-direction: column;
+    height: 75vh;
+}
+
+.notepad-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--primary-border);
+    background: rgba(0, 0, 0, 0.5);
+}
+
+.notepad-title-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.notepad-icon {
+    font-size: 16px;
+}
+
+.notepad-controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.notepad-body {
+    flex: 1;
+    padding: 0;
+    display: flex;
+    overflow: hidden;
+}
+
+.notepad-textarea {
+    width: 100%;
+    height: 100%;
+    background: rgba(2, 6, 14, 0.85);
+    border: none;
+    color: #e0f4ff;
+    font-family: 'Share Tech Mono', 'Consolas', monospace;
+    font-size: 13.5px;
+    line-height: 1.6;
+    padding: 16px;
+    outline: none;
+    resize: none;
+    white-space: pre-wrap;
+}
+
+.notepad-textarea::placeholder {
+    color: rgba(127, 166, 200, 0.4);
+}
+
+.notepad-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 6px 14px;
+    background: rgba(0, 0, 0, 0.6);
+    border-top: 1px solid var(--primary-border);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--text-dim);
+}
+
+.notepad-status {
+    color: var(--primary-glow);
+}
+
+.notepad-hint {
+    color: var(--text-dim);
+    font-size: 10px;
+}
+
+

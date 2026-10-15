@@ -363,6 +363,79 @@ You have direct access to this real live telemetry. If ${this.userName} asks abo
             }
         }
 
+        // --------------------------------------------------------------------------
+        // DEVICE APPS LAUNCHER (WhatsApp, Notepad, Calculator, VS Code, Spotify, etc.)
+        // --------------------------------------------------------------------------
+        if (window.jarvisDevice) {
+            // WhatsApp
+            if (q.includes('whatsapp') || q.includes('whats app')) {
+                let msg = '';
+                let phone = '';
+                if (q.includes('message') || q.includes('send') || q.includes('write')) {
+                    msg = query.replace(/^.*(whatsapp|whats app)(:|\s+to|\s+send|\s+message)?/i, '').trim();
+                }
+                return window.jarvisDevice.openWhatsApp(msg, phone);
+            }
+
+            // Notepad
+            if (q.includes('notepad') || q.includes('open notes') || q.includes('text editor')) {
+                let noteContent = '';
+                if (q.includes('write') || q.includes('take a note') || q.includes('record')) {
+                    noteContent = query.replace(/^.*(notepad|open notes|text editor)(:|\s+and write|\s+write)?/i, '').trim();
+                }
+                return window.jarvisDevice.openNotepad(noteContent);
+            }
+
+            // Calculator
+            if (q.startsWith('open calculator') || q === 'calculator') {
+                const expr = query.replace(/open calculator/i, '').trim();
+                return window.jarvisDevice.openCalculator(expr);
+            }
+
+            // VS Code / Code editor
+            if (q.includes('vs code') || q.includes('vscode') || q === 'open code') {
+                return window.jarvisDevice.openVSCode();
+            }
+
+            // Spotify
+            if (q.includes('spotify') || q.startsWith('play music') || q.startsWith('open music')) {
+                const song = query.replace(/^(open spotify|spotify|play music|open music|play on spotify|play):?/i, '').trim();
+                return window.jarvisDevice.openSpotify(song);
+            }
+
+            // YouTube
+            if (q.startsWith('open youtube') || q.startsWith('search youtube') || q.startsWith('youtube')) {
+                const ytQuery = query.replace(/^(open youtube|search youtube for|search youtube|youtube):?/i, '').trim();
+                return window.jarvisDevice.openYouTube(ytQuery);
+            }
+
+            // Google Maps
+            if (q.startsWith('open maps') || q.startsWith('google maps') || q.startsWith('find on maps') || q.startsWith('show directions')) {
+                const mapQuery = query.replace(/^(open maps|google maps|find on maps|show directions to|show directions):?/i, '').trim();
+                return window.jarvisDevice.openMaps(mapQuery);
+            }
+
+            // Windows Settings
+            if (q.includes('open settings') || q.includes('windows settings') || q === 'settings') {
+                return window.jarvisDevice.openSettings();
+            }
+
+            // Paint
+            if (q.includes('open paint') || q.includes('ms paint')) {
+                return window.jarvisDevice.openPaint();
+            }
+
+            // Clock / Alarms
+            if (q.includes('open clock') || q.includes('open alarm') || q.includes('alarms')) {
+                return window.jarvisDevice.openClock();
+            }
+
+            // Email
+            if (q.startsWith('open email') || q.startsWith('open mail') || q.startsWith('open outlook')) {
+                return window.jarvisDevice.openEmail();
+            }
+        }
+
         return null;
     }
 
