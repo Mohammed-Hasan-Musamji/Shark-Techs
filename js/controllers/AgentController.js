@@ -166,6 +166,41 @@ class AgentController {
         } else if (direct.action === 'clear_chat') {
             this.conversation.clear();
             this.audio.playProcessComplete();
+        } else if (direct.action === 'bridge_search') {
+            this.deliverResponse(direct.message);
+            try { window.open(direct.url, '_blank'); } catch (e) {}
+            if (this.systemBridge) {
+                await this.systemBridge.searchWeb(direct.query, direct.engine, direct.url);
+                this.telemetry.appendLog(`[SEARCH] Query "${direct.query}" dispatched via ${direct.engine.toUpperCase()}`);
+            }
+            if (window.jarvisWorkflow && (direct.engine === 'google' || direct.engine === 'wikipedia')) {
+                window.jarvisWorkflow.toolSearchKnowledge({ query: direct.query }).then(res => {
+                    if (res && res.snippet) {
+                        this.conversation.addMessage('jarvis', `**Quick Intel (${res.title})**: ${res.snippet}`);
+                    }
+                }).catch(() => {});
+            }
+        } else if (direct.action === 'bridge_notepad_write') {
+            this.deliverResponse(direct.message);
+            if (this.directives) {
+                this.directives.appendNote(`[Dictated] ${direct.text}`);
+            }
+            if (this.systemBridge) {
+                const res = await this.systemBridge.openAppWithText('notepad', direct.text);
+                if (res && res.success) {
+                    this.telemetry.appendLog(`[NOTEPAD] Note dictated and opened in Notepad.`);
+                }
+            }
+        } else if (direct.action === 'bridge_whatsapp_msg') {
+            this.deliverResponse(direct.message);
+            if (direct.text && navigator.clipboard) {
+                navigator.clipboard.writeText(direct.text).catch(() => {});
+            }
+            try { window.open(direct.url, '_blank'); } catch (e) {}
+            if (this.systemBridge) {
+                await this.systemBridge.openUrl(direct.url);
+                this.telemetry.appendLog(`[WHATSAPP] Web opened for ${direct.contact}. Message copied to clipboard.`);
+            }
         } else if (direct.action === 'bridge_app') {
             this.deliverResponse(direct.message);
             if (this.systemBridge) {

@@ -1,7 +1,7 @@
 /**
  * ============================================================================
  * J.A.R.V.I.S. CONVERSATION MODEL (M - MVC)
- * Manages the message transmission feed and multi-turn LLM reasoning context
+ * Manages holographic transmission feed, MongoDB history & multi-turn LLM context
  * ============================================================================
  */
 
@@ -11,9 +11,21 @@ class ConversationModel {
         this.messages = [];
         this.history = []; // Multi-turn memory buffer for Groq/OpenAI completions
         this.maxHistory = 12;
+        this.apiBase = this.resolveApiBase();
 
         // Initialize greeting message
         this.initWelcomeMessage();
+
+        // Load historical dialogues from MongoDB
+        this.loadRemoteHistory();
+    }
+
+    resolveApiBase() {
+        if (typeof window === 'undefined') return 'http://localhost:9000';
+        if (window.location.protocol === 'file:' || (window.location.port && window.location.port !== '9000')) {
+            return 'http://localhost:9000';
+        }
+        return '';
     }
 
     subscribe(callback) {
@@ -35,6 +47,22 @@ class ConversationModel {
             isError: false
         };
         this.messages.push(welcome);
+    }
+
+    async loadRemoteHistory() {
+        try {
+            const res = await fetch(`${this.apiBase}/api/history`);
+            if (res.ok) {
+                const data = await res.json();
+                if (data.messages && data.messages.length > 0) {
+                    // Populate loaded messages from MongoDB
+                    this.messages = data.messages;
+                    this.notify('history_loaded', this.messages);
+                }
+            }
+        } catch (e) {
+            // bridge offline, use local memory
+        }
     }
 
     getMessages() {
@@ -73,11 +101,28 @@ class ConversationModel {
             }
         }
 
+        // Notify views
         this.notify('message_added', message);
+
+        // Asynchronously save to MongoDB database in background
+        this.persistMessageToDatabase(message);
+
         return message;
     }
 
-    clear() {
+    async persistMessageToDatabase(msg) {
+        try {
+            await fetch(`${this.apiBase}/api/history`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(msg)
+            });
+        } catch (e) {
+            // offline
+        }
+    }
+
+    async clear() {
         this.messages = [];
         this.history = [];
         const purged = {
@@ -91,5 +136,9 @@ class ConversationModel {
         };
         this.messages.push(purged);
         this.notify('feed_cleared', purged);
+
+        try {
+            await fetch(`${this.apiBase}/api/history`, { method: 'DELETE' });
+        } catch (e) {}
     }
 }

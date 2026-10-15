@@ -1682,3 +1682,141 @@ html, body {
     display: block;
 }
 
+/* ==========================================================================
+   DESKTOP APP LAUNCHER & REAL-TIME SEARCH MATRIX
+   ========================================================================== */
+.apps-launcher-card {
+    max-width: 780px;
+    width: 92%;
+}
+
+.launcher-section {
+    background: rgba(0, 0, 0, 0.35);
+    border: 1px solid var(--primary-border);
+    border-radius: var(--border-radius-md);
+    padding: 12px 14px;
+    margin-bottom: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.section-badge-title {
+    font-family: var(--font-display);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.8px;
+    color: var(--primary-glow);
+}
+
+.section-desc {
+    font-size: 11px;
+    color: var(--text-secondary);
+    line-height: 1.4;
+}
+
+.search-engine-row, .notepad-writer-row {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.hud-select.sm {
+    padding: 6px 8px;
+    font-size: 11px;
+    background: rgba(0, 0, 0, 0.6);
+    border: 1px solid var(--primary-border);
+    color: #ffffff;
+    border-radius: 4px;
+    font-family: var(--font-mono);
+}
+
+/* ==========================================================================
+   HARSH WORKFLOW & SELF-HEALING STYLES
+   ========================================================================== */
+.step-chip {
+    font-family: var(--font-mono);
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    padding: 1px 6px;
+    border-radius: 4px;
+    text-transform: uppercase;
+}
+
+.step-chip.pending {
+    background: rgba(255, 255, 255, 0.06);
+    color: var(--text-dim);
+}
+
+.step-chip.running {
+    background: rgba(255, 183, 3, 0.2);
+    color: var(--warning-color);
+    border: 1px solid var(--warning-color);
+    animation: pulseWarning 1.2s infinite ease-in-out;
+}
+
+.step-chip.completed {
+    background: rgba(0, 255, 136, 0.15);
+    color: #00ff88;
+    border: 1px solid rgba(0, 255, 136, 0.4);
+}
+
+.step-chip.healed {
+    background: rgba(0, 240, 255, 0.15);
+    color: var(--primary-glow);
+    border: 1px solid var(--primary-glow);
+}
+
+.step-chip.failed {
+    background: rgba(255, 51, 102, 0.2);
+    color: var(--alert-color);
+    border: 1px solid var(--alert-color);
+}
+
+.step-error-box {
+    margin-top: 6px;
+    padding: 6px 8px;
+    background: rgba(255, 51, 102, 0.12);
+    border: 1px solid rgba(255, 51, 102, 0.4);
+    border-radius: var(--border-radius-sm);
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.error-text {
+    font-size: 11px;
+    color: #ff859f;
+    font-family: var(--font-mono);
+}
+
+.step-actions {
+    display: flex;
+    gap: 6px;
+    justify-content: flex-end;
+}
+
+.retry-btn {
+    background: rgba(255, 183, 3, 0.25);
+    border: 1px solid var(--warning-color);
+    color: var(--warning-color);
+}
+
+.skip-btn {
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: var(--text-secondary);
+}
+
+.apps-pill {
+    background: rgba(0, 240, 255, 0.12);
+    border-color: rgba(0, 240, 255, 0.4);
+}
+
+.history-pill {
+    background: rgba(0, 255, 136, 0.12);
+    border-color: rgba(0, 255, 136, 0.4);
+}
+
+

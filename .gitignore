@@ -4,6 +4,13 @@
 .env.*.local
 env.js
 
+# Node Dependencies
+node_modules/
+npm-debug.log*
+
+# Local Runtime Data
+data/
+
 # Operating System & Editor Files
 .DS_Store
 Thumbs.db

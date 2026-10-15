@@ -1,8 +1,7 @@
 /**
  * ============================================================================
- * J.A.R.V.I.S. SYSTEM BRIDGE & MULTI-DEVICE SERVER
- * Express-free, zero-dependency Node.js Host Server & System Control Bridge
- * Accessible from Host PC, Local Network Wi-Fi (Phone/Tablet) & Remote Tunnel
+ * J.A.R.V.I.S. SYSTEM BRIDGE, MONGODB HISTORY & MULTI-DEVICE SERVER
+ * Host System Automation, Active Window Desktop Control, Mobile QR Uplink & MongoDB
  * ============================================================================
  */
 
@@ -12,12 +11,47 @@ const path = require('path');
 const os = require('os');
 const { exec, spawn } = require('child_process');
 
+let MongoClient = null;
+try {
+    MongoClient = require('mongodb').MongoClient;
+} catch (e) {
+    console.warn('MongoDB client module not installed, using fallback file storage.');
+}
+
 const PORT = process.env.PORT || 9000;
 const ROOT_DIR = __dirname;
+const DATA_DIR = path.join(ROOT_DIR, 'data');
+const HISTORY_FILE = path.join(DATA_DIR, 'history.json');
+
+// Ensure data folder exists
+if (!fs.existsSync(DATA_DIR)) {
+    try { fs.mkdirSync(DATA_DIR, { recursive: true }); } catch (e) {}
+}
 
 // Global tunnel state
 let activeTunnelProcess = null;
 let activeTunnelUrl = null;
+
+// MongoDB Connection State
+const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/jarvis_hud';
+let mongoClientInstance = null;
+let mongoDb = null;
+let isMongoConnected = false;
+
+async function initMongoDB() {
+    if (!MongoClient) return;
+    try {
+        mongoClientInstance = new MongoClient(MONGODB_URI, { serverSelectionTimeoutMS: 2000 });
+        await mongoClientInstance.connect();
+        mongoDb = mongoClientInstance.db();
+        isMongoConnected = true;
+        console.log(`  > MongoDB Connected: ${MONGODB_URI}`);
+    } catch (err) {
+        isMongoConnected = false;
+        console.log(`  > MongoDB Not Connected: Using local JSON persistence (${HISTORY_FILE})`);
+    }
+}
+initMongoDB();
 
 // MIME Types
 const MIME_TYPES = {
@@ -31,7 +65,8 @@ const MIME_TYPES = {
     '.svg': 'image/svg+xml',
     '.ico': 'image/x-icon',
     '.env': 'text/plain; charset=utf-8',
-    '.txt': 'text/plain; charset=utf-8'
+    '.txt': 'text/plain; charset=utf-8',
+    '.md': 'text/markdown; charset=utf-8'
 };
 
 /**
@@ -50,7 +85,6 @@ function getLocalNetworkAddresses() {
                     ip: iface.address,
                     mac: iface.mac
                 });
-                // Prioritize Wi-Fi or Ethernet
                 if (name.toLowerCase().includes('wi-fi') || name.toLowerCase().includes('wireless') || name.toLowerCase().includes('eth')) {
                     primaryIp = iface.address;
                 } else if (primaryIp === '127.0.0.1') {
@@ -111,7 +145,6 @@ function runPowerShell(script) {
             });
         });
 
-        // 15-second safety timeout
         setTimeout(() => {
             try { child.kill(); } catch (e) {}
             resolve({ success: false, code: -1, stdout: stdout.trim(), stderr: 'Command timed out (15s limit)' });
@@ -139,12 +172,88 @@ function launchAppOrUrl(target) {
 }
 
 /**
+ * MongoDB & File History Helpers
+ */
+async function getHistoryMessages(limit = 100) {
+    if (isMongoConnected && mongoDb) {
+        try {
+            const col = mongoDb.collection('messages');
+            const docs = await col.find({}).sort({ timestampNum: 1 }).limit(limit).toArray();
+            return docs.map(d => ({
+                id: d.id,
+                role: d.role,
+                sender: d.sender,
+                badge: d.badge,
+                text: d.text,
+                timestamp: d.timestamp,
+                isError: Boolean(d.isError)
+            }));
+        } catch (e) {
+            console.warn('Mongo read error, falling back to local file:', e.message);
+        }
+    }
+
+    try {
+        if (fs.existsSync(HISTORY_FILE)) {
+            const content = fs.readFileSync(HISTORY_FILE, 'utf8');
+            return JSON.parse(content || '[]');
+        }
+    } catch (e) {}
+    return [];
+}
+
+async function saveHistoryMessage(msg) {
+    const doc = {
+        id: msg.id || (Date.now() + Math.random()),
+        role: msg.role || 'user',
+        sender: msg.sender || (msg.role === 'user' ? 'TONY STARK' : 'J.A.R.V.I.S.'),
+        badge: msg.badge || (msg.role === 'user' ? 'COMMAND' : 'ONLINE'),
+        text: msg.text || '',
+        timestamp: msg.timestamp || new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        timestampNum: Date.now(),
+        isError: Boolean(msg.isError)
+    };
+
+    if (isMongoConnected && mongoDb) {
+        try {
+            await mongoDb.collection('messages').insertOne(doc);
+        } catch (e) {
+            console.warn('Mongo insert error:', e.message);
+        }
+    }
+
+    // Mirror to disk
+    try {
+        let history = [];
+        if (fs.existsSync(HISTORY_FILE)) {
+            history = JSON.parse(fs.readFileSync(HISTORY_FILE, 'utf8') || '[]');
+        }
+        history.push(doc);
+        if (history.length > 500) history = history.slice(-500);
+        fs.writeFileSync(HISTORY_FILE, JSON.stringify(history, null, 2), 'utf8');
+    } catch (e) {}
+
+    return doc;
+}
+
+async function clearHistoryMessages() {
+    if (isMongoConnected && mongoDb) {
+        try {
+            await mongoDb.collection('messages').deleteMany({});
+        } catch (e) {}
+    }
+    try {
+        fs.writeFileSync(HISTORY_FILE, '[]', 'utf8');
+    } catch (e) {}
+}
+
+/**
  * Handle API Requests
  */
 async function handleApiRequest(req, res, pathname) {
     res.setHeader('Content-Type', 'application/json; charset=utf-8');
     res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, DELETE, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 
     if (req.method === 'OPTIONS') {
@@ -153,7 +262,6 @@ async function handleApiRequest(req, res, pathname) {
         return;
     }
 
-    // Helper to read JSON body
     const readBody = () => new Promise((resolve) => {
         let body = '';
         req.on('data', chunk => { body += chunk; });
@@ -178,7 +286,8 @@ async function handleApiRequest(req, res, pathname) {
             allInterfaces: addresses,
             qrCodeUrl: qrUrl,
             remoteTunnelUrl: activeTunnelUrl,
-            isTunnelActive: Boolean(activeTunnelUrl)
+            isTunnelActive: Boolean(activeTunnelUrl),
+            isMongoConnected
         }));
         return;
     }
@@ -215,7 +324,7 @@ async function handleApiRequest(req, res, pathname) {
         return;
     }
 
-    // 3. POST /api/system/open-app
+    // 3. POST /api/system/open-app (with writing/text support)
     if (pathname === '/api/system/open-app' && req.method === 'POST') {
         const data = await readBody();
         const app = (data.app || '').toLowerCase().trim();
@@ -226,7 +335,25 @@ async function handleApiRequest(req, res, pathname) {
             return;
         }
 
-        // Map known shortcuts to Windows executables or URIs
+        // Dictation note writing to Notepad
+        if ((app === 'notepad' || app === 'notes') && data.text) {
+            const noteFile = path.join(DATA_DIR, 'jarvis_note.txt');
+            const stamp = new Date().toLocaleString();
+            const noteContent = `=== J.A.R.V.I.S. DICTATED NOTE [${stamp}] ===\r\n\r\n${data.text}\r\n`;
+            fs.writeFileSync(noteFile, noteContent, 'utf8');
+
+            const result = await launchAppOrUrl(`notepad.exe "${noteFile}"`);
+            res.writeHead(200);
+            res.end(JSON.stringify({
+                success: result.success,
+                app: 'notepad',
+                text: data.text,
+                file: noteFile,
+                message: `Notepad opened with note: "${data.text}"`
+            }));
+            return;
+        }
+
         const appMap = {
             'notepad': 'notepad.exe',
             'notes': 'notepad.exe',
@@ -297,12 +424,69 @@ async function handleApiRequest(req, res, pathname) {
         return;
     }
 
-    // 5. POST /api/system/volume
+    // 5. POST /api/system/search (Google, YouTube, Wikipedia, GitHub, Bing)
+    if (pathname === '/api/system/search' && req.method === 'POST') {
+        const data = await readBody();
+        const query = (data.query || '').trim();
+        const engine = (data.engine || 'google').toLowerCase();
+
+        if (!query) {
+            res.writeHead(400);
+            res.end(JSON.stringify({ success: false, error: 'No query specified' }));
+            return;
+        }
+
+        let targetUrl;
+        if (engine === 'youtube') {
+            targetUrl = `https://www.youtube.com/results?search_query=${encodeURIComponent(query)}`;
+        } else if (engine === 'wikipedia') {
+            targetUrl = `https://en.wikipedia.org/wiki/Special:Search?search=${encodeURIComponent(query)}`;
+        } else if (engine === 'github') {
+            targetUrl = `https://github.com/search?q=${encodeURIComponent(query)}`;
+        } else if (engine === 'amazon') {
+            targetUrl = `https://www.amazon.com/s?k=${encodeURIComponent(query)}`;
+        } else if (engine === 'bing') {
+            targetUrl = `https://www.bing.com/search?q=${encodeURIComponent(query)}`;
+        } else {
+            targetUrl = `https://www.google.com/search?q=${encodeURIComponent(query)}`;
+        }
+
+        const result = await launchAppOrUrl(targetUrl);
+        res.writeHead(200);
+        res.end(JSON.stringify({
+            success: result.success,
+            engine,
+            query,
+            url: targetUrl,
+            message: `Searched ${engine.toUpperCase()} for "${query}"`
+        }));
+        return;
+    }
+
+    // 6. POST /api/system/type (Type into active window)
+    if (pathname === '/api/system/type' && req.method === 'POST') {
+        const data = await readBody();
+        const text = (data.text || '').replace(/'/g, "''");
+        if (!text) {
+            res.writeHead(400);
+            res.end(JSON.stringify({ success: false, error: 'No text provided' }));
+            return;
+        }
+        const script = `
+            Add-Type -AssemblyName System.Windows.Forms
+            [System.Windows.Forms.SendKeys]::SendWait('${text}')
+        `;
+        const result = await runPowerShell(script);
+        res.writeHead(200);
+        res.end(JSON.stringify({ success: result.success, message: 'Typed text into active window' }));
+        return;
+    }
+
+    // 7. POST /api/system/volume
     if (pathname === '/api/system/volume' && req.method === 'POST') {
         const data = await readBody();
         const action = (data.action || 'up').toLowerCase();
 
-        // 173: Mute, 174: Volume Down, 175: Volume Up
         let sendKey = 175;
         let repeat = 5;
 
@@ -337,7 +521,7 @@ async function handleApiRequest(req, res, pathname) {
         return;
     }
 
-    // 6. POST /api/system/lock
+    // 8. POST /api/system/lock
     if (pathname === '/api/system/lock' && req.method === 'POST') {
         const script = `rundll32.exe user32.dll,LockWorkStation`;
         const result = await runPowerShell(script);
@@ -350,7 +534,7 @@ async function handleApiRequest(req, res, pathname) {
         return;
     }
 
-    // 7. GET /api/system/screenshot
+    // 9. GET /api/system/screenshot
     if (pathname === '/api/system/screenshot' && req.method === 'GET') {
         const script = `
             Add-Type -AssemblyName System.Windows.Forms
@@ -386,7 +570,7 @@ async function handleApiRequest(req, res, pathname) {
         return;
     }
 
-    // 8. POST /api/system/execute
+    // 10. POST /api/system/execute
     if (pathname === '/api/system/execute' && req.method === 'POST') {
         const data = await readBody();
         const command = (data.command || '').trim();
@@ -409,46 +593,77 @@ async function handleApiRequest(req, res, pathname) {
         return;
     }
 
-    // 9. POST /api/system/file-action
-    if (pathname === '/api/system/file-action' && req.method === 'POST') {
-        const data = await readBody();
-        const action = data.action; // 'list' | 'read' | 'write'
-        const targetPath = data.path || ROOT_DIR;
-
-        try {
-            if (action === 'list') {
-                const files = fs.readdirSync(targetPath);
-                const items = files.map(name => {
-                    const full = path.join(targetPath, name);
-                    try {
-                        const stat = fs.statSync(full);
-                        return { name, isDirectory: stat.isDirectory(), size: stat.size };
-                    } catch (e) {
-                        return { name, isDirectory: false, size: 0 };
-                    }
-                });
-                res.writeHead(200);
-                res.end(JSON.stringify({ success: true, path: targetPath, items }));
-                return;
-            } else if (action === 'read') {
-                const content = fs.readFileSync(targetPath, 'utf8');
-                res.writeHead(200);
-                res.end(JSON.stringify({ success: true, path: targetPath, content }));
-                return;
-            } else if (action === 'write') {
-                fs.writeFileSync(targetPath, data.content || '', 'utf8');
-                res.writeHead(200);
-                res.end(JSON.stringify({ success: true, path: targetPath, message: 'File written successfully' }));
-                return;
-            }
-        } catch (err) {
-            res.writeHead(500);
-            res.end(JSON.stringify({ success: false, error: err.message }));
-            return;
-        }
+    // 11. MONGODB CONVERSATION HISTORY API
+    // GET /api/history
+    if (pathname === '/api/history' && req.method === 'GET') {
+        const messages = await getHistoryMessages();
+        res.writeHead(200);
+        res.end(JSON.stringify({
+            success: true,
+            messages,
+            isMongoConnected
+        }));
+        return;
     }
 
-    // 10. POST /api/tunnel/toggle
+    // POST /api/history
+    if (pathname === '/api/history' && req.method === 'POST') {
+        const data = await readBody();
+        const saved = await saveHistoryMessage(data);
+        res.writeHead(200);
+        res.end(JSON.stringify({
+            success: true,
+            message: saved,
+            isMongoConnected
+        }));
+        return;
+    }
+
+    // DELETE /api/history
+    if (pathname === '/api/history' && req.method === 'DELETE') {
+        await clearHistoryMessages();
+        res.writeHead(200);
+        res.end(JSON.stringify({
+            success: true,
+            message: 'Conversation history purged from database.',
+            isMongoConnected
+        }));
+        return;
+    }
+
+    // GET /api/history/export
+    if (pathname === '/api/history/export' && req.method === 'GET') {
+        const parsed = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
+        const format = parsed.searchParams.get('format') || 'markdown';
+        const messages = await getHistoryMessages(1000);
+
+        if (format === 'json') {
+            res.setHeader('Content-Type', 'application/json; charset=utf-8');
+            res.setHeader('Content-Disposition', 'attachment; filename="jarvis_conversation_history.json"');
+            res.writeHead(200);
+            res.end(JSON.stringify(messages, null, 2));
+            return;
+        }
+
+        let md = `# J.A.R.V.I.S. TACTICAL CONVERSATION ARCHIVE\n\n`;
+        md += `**Generated**: ${new Date().toLocaleString()}\n`;
+        md += `**Total Records**: ${messages.length}\n`;
+        md += `**Storage Matrix**: ${isMongoConnected ? 'MongoDB (Local Instance)' : 'Resilient File Cache'}\n\n`;
+        md += `---\n\n`;
+
+        messages.forEach(m => {
+            md += `### [${m.timestamp}] ${m.sender} (${m.badge})\n`;
+            md += `${m.text}\n\n`;
+        });
+
+        res.setHeader('Content-Type', 'text/markdown; charset=utf-8');
+        res.setHeader('Content-Disposition', 'attachment; filename="jarvis_transcript.md"');
+        res.writeHead(200);
+        res.end(md);
+        return;
+    }
+
+    // 12. POST /api/tunnel/toggle
     if (pathname === '/api/tunnel/toggle' && req.method === 'POST') {
         if (activeTunnelProcess) {
             try { activeTunnelProcess.kill(); } catch (e) {}
@@ -463,7 +678,6 @@ async function handleApiRequest(req, res, pathname) {
             return;
         }
 
-        // Start localtunnel via npx
         try {
             const tunnelChild = spawn('npx.cmd', ['-y', 'localtunnel', '--port', String(PORT)]);
             activeTunnelProcess = tunnelChild;
@@ -487,7 +701,6 @@ async function handleApiRequest(req, res, pathname) {
                 activeTunnelUrl = null;
             });
 
-            // Wait up to 6 seconds for tunnel URL to generate
             let waited = 0;
             while (!capturedUrl && waited < 30) {
                 await new Promise(r => setTimeout(r, 200));
@@ -531,7 +744,6 @@ function handleStaticFile(req, res, pathname) {
 
     const filePath = path.join(ROOT_DIR, safePath);
 
-    // Prevent directory traversal
     if (!filePath.startsWith(ROOT_DIR)) {
         res.writeHead(403);
         res.end('Access Denied');
@@ -580,6 +792,7 @@ server.listen(PORT, '0.0.0.0', () => {
     console.log(`================================================================`);
     console.log(`  > Local Computer Console: http://localhost:${PORT}`);
     console.log(`  > Mobile Phone (Wi-Fi):  http://${primaryIp}:${PORT}`);
-    console.log(`  > System Capabilities:   App Launch, Audio, Screen, Exec, Shell`);
+    console.log(`  > MongoDB History:       ${isMongoConnected ? 'ONLINE' : 'FALLBACK FILE'}`);
+    console.log(`  > System Capabilities:   App Launch, Audio, Screen, Exec, Shell, Search`);
     console.log(`================================================================`);
 });

@@ -192,6 +192,108 @@ class SystemBridgeModel {
         }
     }
 
+    async searchWeb(query, engine = 'google', fallbackUrl = '') {
+        try {
+            const res = await fetch(`${this.apiBase}/api/system/search`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ query, engine })
+            });
+            const data = await res.json();
+            this.notify('action_completed', { action: 'search', query, engine, data });
+            return data;
+        } catch (e) {
+            if (fallbackUrl) {
+                try { window.open(fallbackUrl, '_blank'); } catch (err) {}
+            }
+            return { success: false, error: e.message };
+        }
+    }
+
+    async openAppWithText(app, text) {
+        try {
+            const res = await fetch(`${this.apiBase}/api/system/open-app`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ app, text })
+            });
+            const data = await res.json();
+            this.notify('action_completed', { action: 'open_app_text', app, text, data });
+            return data;
+        } catch (e) {
+            return { success: false, error: e.message };
+        }
+    }
+
+    async typeText(text) {
+        try {
+            const res = await fetch(`${this.apiBase}/api/system/type`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ text })
+            });
+            const data = await res.json();
+            this.notify('action_completed', { action: 'type_text', text, data });
+            return data;
+        } catch (e) {
+            return { success: false, error: e.message };
+        }
+    }
+
+    async getConversationHistory() {
+        try {
+            const res = await fetch(`${this.apiBase}/api/history`);
+            if (res.ok) {
+                const data = await res.json();
+                return data.messages || [];
+            }
+        } catch (e) {
+            console.warn('Could not fetch MongoDB conversation history:', e.message);
+        }
+        return [];
+    }
+
+    async saveConversationMessage(message) {
+        try {
+            const res = await fetch(`${this.apiBase}/api/history`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(message)
+            });
+            if (res.ok) {
+                return await res.json();
+            }
+        } catch (e) {
+            // bridge offline
+        }
+        return null;
+    }
+
+    async exportConversationHistory(format = 'markdown') {
+        const url = `${this.apiBase}/api/history/export?format=${encodeURIComponent(format)}`;
+        try {
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = format === 'json' ? 'jarvis_history.json' : 'jarvis_transcript.md';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            return true;
+        } catch (e) {
+            window.open(url, '_blank');
+            return true;
+        }
+    }
+
+    async clearConversationHistory() {
+        try {
+            const res = await fetch(`${this.apiBase}/api/history`, { method: 'DELETE' });
+            return res.ok;
+        } catch (e) {
+            return false;
+        }
+    }
+
     async toggleRemoteTunnel() {
         try {
             const res = await fetch(`${this.apiBase}/api/tunnel/toggle`, { method: 'POST' });

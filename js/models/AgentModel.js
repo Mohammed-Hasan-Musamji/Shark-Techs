@@ -104,12 +104,133 @@ Speak naturally and confirm the action is executing.`;
             }
         }
 
-        // 3. Flexible System App & URL Launching on Computer (Works anywhere in sentence & Chinese)
+        // 3. Application Dictation, Web Search & Interactive System Launching
+
+        // A. Notepad Writing & Note Dictation (e.g., "hello open Notepad and write hi Janvi and hi Harsh")
+        const notepadWriteRegex = /(?:open\s+(?:notepad|notes|记事本)\s+(?:and\s+)?(?:write|type|dictate|写入|输入)|(?:write|type|dictate|写入)\s+(.+?)\s+(?:in|into|to|on)\s+(?:notepad|notes|记事本)|(?:in|into)\s+(?:notepad|notes|记事本)\s+(?:write|type)\s+)(.+)/i;
+        const npMatch = q.match(notepadWriteRegex);
+        if (npMatch || (q.includes('notepad') && (q.includes('write') || q.includes('type') || q.includes('dictate')))) {
+            let noteText = '';
+            if (npMatch) {
+                noteText = (npMatch[2] || npMatch[1] || '').trim();
+            }
+            if (!noteText) {
+                const sub = input.replace(/.*(?:write|type|dictate|写入|输入)\s+/i, '').replace(/\s+(?:in|into|on)\s+(?:notepad|notes|记事本).*/i, '').trim();
+                if (sub) noteText = sub;
+            }
+            if (noteText) {
+                return {
+                    action: 'bridge_notepad_write',
+                    app: 'notepad',
+                    text: noteText,
+                    message: `Opening Notepad and writing: "${noteText}", ${this.config.userName}.`
+                };
+            }
+        }
+
+        // B. WhatsApp Messaging (e.g., "hello open WhatsApp and message to Janvi hai")
+        const whatsappMsgRegex = /(?:open\s+whatsapp\s+(?:and\s+)?(?:message|send|text)|message|send|text)\s+(?:to\s+)?([a-zA-Z0-9_\u4e00-\u9fa5]+)\s+(?:saying\s+|that\s+|:|)(.+)/i;
+        const waMatch = input.match(whatsappMsgRegex);
+        if (waMatch && (q.includes('whatsapp') || q.includes('微信'))) {
+            const contact = waMatch[1].trim();
+            const msg = waMatch[2].trim();
+            return {
+                action: 'bridge_whatsapp_msg',
+                contact,
+                text: msg,
+                url: 'https://web.whatsapp.com',
+                message: `Opening WhatsApp Web for ${contact}, ${this.config.userName}. I have copied your message "${msg}" to your clipboard so you can paste and send immediately.`
+            };
+        }
+
+        // C. YouTube Search & Playback (e.g., "search youtube for lo-fi music")
+        if (q.includes('youtube') && (q.includes('search') || q.includes('play') || q.includes('find') || q.includes('look up') || q.includes('搜索') || q.includes('播放'))) {
+            let ytQuery = input
+                .replace(/.*(?:search|look up|find|play|搜索|播放)\s+(?:for\s+|about\s+|on\s+youtube\s+for\s+)?/i, '')
+                .replace(/\s+(?:on|in)\s+youtube.*/i, '')
+                .replace(/.*youtube\s+(?:for\s+)?/i, '')
+                .trim();
+            if (ytQuery) {
+                const ytUrl = `https://www.youtube.com/results?search_query=${encodeURIComponent(ytQuery)}`;
+                return {
+                    action: 'bridge_search',
+                    engine: 'youtube',
+                    query: ytQuery,
+                    url: ytUrl,
+                    message: `Searching YouTube for "${ytQuery}", ${this.config.userName}. Opening video results.`
+                };
+            }
+        }
+
+        // D. Wikipedia / Knowledge Search
+        if (q.includes('wikipedia') && (q.includes('search') || q.includes('look up') || q.includes('find') || q.includes('who is') || q.includes('what is'))) {
+            let wikiQuery = input
+                .replace(/.*(?:search|look up|find|who is|what is)\s+(?:for\s+|about\s+|on\s+wikipedia\s+for\s+)?/i, '')
+                .replace(/\s+(?:on|in)\s+wikipedia.*/i, '')
+                .replace(/.*wikipedia\s+(?:for\s+)?/i, '')
+                .trim();
+            if (wikiQuery) {
+                const wikiUrl = `https://en.wikipedia.org/wiki/Special:Search?search=${encodeURIComponent(wikiQuery)}`;
+                return {
+                    action: 'bridge_search',
+                    engine: 'wikipedia',
+                    query: wikiQuery,
+                    url: wikiUrl,
+                    message: `Querying Wikipedia knowledge base for "${wikiQuery}", ${this.config.userName}.`
+                };
+            }
+        }
+
+        // E. GitHub Search
+        if (q.includes('github') && (q.includes('search') || q.includes('find') || q.includes('repo'))) {
+            let ghQuery = input
+                .replace(/.*(?:search|find|repo|look up)\s+(?:for\s+|about\s+|on\s+github\s+for\s+)?/i, '')
+                .replace(/\s+(?:on|in)\s+github.*/i, '')
+                .replace(/.*github\s+(?:for\s+)?/i, '')
+                .trim();
+            if (ghQuery) {
+                const ghUrl = `https://github.com/search?q=${encodeURIComponent(ghQuery)}`;
+                return {
+                    action: 'bridge_search',
+                    engine: 'github',
+                    query: ghQuery,
+                    url: ghUrl,
+                    message: `Searching GitHub repositories for "${ghQuery}", ${this.config.userName}.`
+                };
+            }
+        }
+
+        // F. General Google & Browser Search (e.g., "search quantum computing on google", "open browser and search for latest AI news")
+        const isSearchIntent = q.startsWith('search ') || q.startsWith('google ') || q.startsWith('look up ') || q.startsWith('find ')
+            || q.includes('search for ') || q.includes('search on google') || q.includes('google search')
+            || (q.includes('browser') && (q.includes('search') || q.includes('look up') || q.includes('find') || q.includes('query')))
+            || q.startsWith('搜索') || q.startsWith('查一下') || q.includes('在谷歌搜索') || q.includes('打开浏览器搜索');
+
+        if (isSearchIntent) {
+            let sQuery = input
+                .replace(/^.*?(?:open\s+(?:browser|chrome|google|edge)\s+(?:and\s+)?(?:search|type|look\s*up)|(?:please\s+)?(?:search|google|look\s*up|find)\s+(?:for\s+|about\s+|on\s+google\s+for\s+)?|在谷歌搜索|打开浏览器搜索|搜索|查一下|找一下)\s*/i, '')
+                .replace(/\s+(?:on|in)\s+(?:google|browser|chrome|internet|web).*/i, '')
+                .replace(/[?]+$/, '')
+                .trim();
+
+            if (sQuery && sQuery.length > 1) {
+                const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(sQuery)}`;
+                return {
+                    action: 'bridge_search',
+                    engine: 'google',
+                    query: sQuery,
+                    url: searchUrl,
+                    message: `Searching Google for "${sQuery}" on your host browser, ${this.config.userName}.`
+                };
+            }
+        }
+
+        // G. Standard System App & URL Launching (When no search/write payload specified)
         const hasOpenIntent = /(?:^|\s)(?:open|launch|start|run|goto|navigate|打开|启动|运行|访问)(?:\s|$)/i.test(q)
             || q.includes('打开') || q.includes('启动');
 
         if (hasOpenIntent || q.includes('whatsapp') || q.includes('spotify') || q.includes('youtube') || q.includes('github')) {
-            // A. WhatsApp Web & Messaging
+            // A. WhatsApp Web
             if (q.includes('whatsapp') || q.includes('微信')) {
                 return {
                     action: 'bridge_url',

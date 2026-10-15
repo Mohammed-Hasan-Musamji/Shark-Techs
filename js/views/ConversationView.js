@@ -16,8 +16,16 @@ class ConversationView {
                 this.renderMessage(data);
             } else if (action === 'feed_cleared') {
                 this.renderCleared(data);
+            } else if (action === 'history_loaded') {
+                this.renderHistory(data);
             }
         });
+    }
+
+    renderHistory(messages) {
+        if (!this.streamEl) return;
+        this.streamEl.innerHTML = '';
+        messages.forEach(msg => this.renderMessage(msg));
     }
 
     renderMessage(msg) {

@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>J.A.R.V.I.S. — Personal AI Agent & Stark HUD</title>
     <meta name="description" content="Next-Generation Personal AI Agent with Interactive Arc Reactor Visualizer, Real-Time Speech Recognition, Voice Synthesis, and Stark Industries HUD.">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#030712">
     <!-- Google Fonts for Authentic Sci-Fi Stark HUD -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -49,6 +51,14 @@
                 <button id="btnAiCoreStatus" class="hud-ai-pill" title="Configure AI Intelligence Core (Groq / OpenAI)" aria-label="AI Core">
                     <span class="ai-pill-icon">⚡</span>
                     <span id="aiCoreLabel" class="ai-pill-text">AI: GROQ / OPENAI</span>
+                </button>
+                <button id="btnAppsLauncher" class="hud-ai-pill apps-pill" title="Desktop App Launcher & Real-time Web Search" aria-label="Apps and Search">
+                    <span class="ai-pill-icon">💻</span>
+                    <span class="ai-pill-text">APPS & SEARCH</span>
+                </button>
+                <button id="btnExportChat" class="hud-ai-pill history-pill" title="Export MongoDB Conversation History" aria-label="Export Chat">
+                    <span class="ai-pill-icon">💾</span>
+                    <span class="ai-pill-text">EXPORT CHAT</span>
                 </button>
                 <div class="hud-clock">
                     <span id="hudTime" class="time-display">00:00:00</span>
@@ -514,6 +524,74 @@
         </div>
     </div>
 
+    <!-- Desktop Application Launcher & Real-time Web Search Modal -->
+    <div id="appsLauncherModal" class="hud-modal" role="dialog" aria-modal="true" aria-hidden="true">
+        <div class="modal-card apps-launcher-card">
+            <div class="modal-header">
+                <div class="modal-title-group">
+                    <span class="modal-icon">💻</span>
+                    <h2 class="modal-title">DESKTOP APP LAUNCHER & SEARCH MATRIX</h2>
+                </div>
+                <button id="btnCloseAppsLauncher" class="modal-close" aria-label="Close Desktop Launcher">&times;</button>
+            </div>
+            <div class="modal-body">
+                <!-- Real-time Web Search Matrix -->
+                <div class="launcher-section">
+                    <div class="section-badge-title">🌐 REAL-TIME WEB SEARCH & AUTOMATION</div>
+                    <p class="section-desc">Executes search queries directly in host browser (Chrome/Edge) or queries live knowledge.</p>
+                    <div class="search-engine-row">
+                        <select id="searchEngineSelect" class="hud-select sm">
+                            <option value="google">Google Search</option>
+                            <option value="youtube">YouTube Videos</option>
+                            <option value="wikipedia">Wikipedia Knowledge</option>
+                            <option value="github">GitHub Repositories</option>
+                        </select>
+                        <input type="text" id="launcherSearchInput" class="hud-input sm" placeholder="Enter topic to search..." />
+                        <button id="btnExecuteSearch" class="hud-btn primary sm">SEARCH NOW</button>
+                    </div>
+                </div>
+
+                <!-- Notepad Dictation & Note Writer -->
+                <div class="launcher-section">
+                    <div class="section-badge-title">📝 NOTEPAD DICTATION & TEXT WRITING</div>
+                    <p class="section-desc">Type or dictate notes; J.A.R.V.I.S. writes the file and displays it in Windows Notepad.</p>
+                    <div class="notepad-writer-row">
+                        <input type="text" id="launcherNotepadText" class="hud-input sm" placeholder="Dictate or type note text (e.g. hi Janvi and hi Harsh)..." />
+                        <button id="btnWriteToNotepad" class="hud-btn secondary sm">WRITE & OPEN</button>
+                    </div>
+                </div>
+
+                <!-- 1-Click Desktop Application Launch Grid -->
+                <div class="launcher-section">
+                    <div class="section-badge-title">🚀 RAPID APPLICATION LAUNCH PROTOCOLS</div>
+                    <div class="bridge-quick-grid">
+                        <button class="bridge-quick-btn" data-app-launch="chrome">🌐 Google Chrome</button>
+                        <button class="bridge-quick-btn" data-app-launch="notepad">📝 Notepad</button>
+                        <button class="bridge-quick-btn" data-app-launch="spotify">🎵 Spotify</button>
+                        <button class="bridge-quick-btn" data-app-launch="calc">🧮 Calculator</button>
+                        <button class="bridge-quick-btn" data-app-launch="vscode">💻 VS Code</button>
+                        <button class="bridge-quick-btn" data-app-launch="explorer">📁 File Explorer</button>
+                        <button class="bridge-quick-btn" data-app-launch="taskmgr">📊 Task Manager</button>
+                        <button class="bridge-quick-btn" data-app-launch="whatsapp">💬 WhatsApp Web</button>
+                    </div>
+                </div>
+
+                <!-- Host Desktop Console Control -->
+                <div class="launcher-section">
+                    <div class="section-badge-title">🛡️ HOST WORKSTATION CONTROLS</div>
+                    <div class="bridge-quick-grid">
+                        <button class="bridge-quick-btn" id="btnQuickMute">🔇 Mute PC</button>
+                        <button class="bridge-quick-btn" id="btnQuickVolumeUp">🔊 Volume +</button>
+                        <button class="bridge-quick-btn" id="btnQuickVolumeDown">🔉 Volume -</button>
+                        <button class="bridge-quick-btn" id="btnQuickScreenshot">📸 Screenshot</button>
+                        <button class="bridge-quick-btn" id="btnQuickLock">🔒 Lock PC</button>
+                        <button class="bridge-quick-btn" id="btnQuickExportHistory">💾 Export History</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Environment Config -->
     <script src="env.js"></script>
 
@@ -542,6 +620,9 @@
     <script src="js/controllers/SettingsController.js"></script>
     <script src="js/controllers/AgentController.js"></script>
     <script src="js/controllers/AppController.js"></script>
+
+    <!-- Autonomous Multi-Step Workflow Engine (Harsh Branch) -->
+    <script src="js/workflow.js"></script>
 
     <!-- Application Bootstrap -->
     <script src="js/app.js"></script>

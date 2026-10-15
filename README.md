@@ -122,6 +122,11 @@ You can speak or type any of the following to command your PC:
 | :--- | :--- |
 | *"Open Spotify"* / *"Play Spotify"* | Launches Spotify application on host console |
 | *"Open Notepad"* / *"Open notes"* | Launches Windows Notepad on screen |
+| *"Open Notepad and write [text]"* | Writes text into document and opens Notepad with content rendered |
+| *"Search [query] on Google"* | Opens browser and performs Google search for query |
+| *"Search YouTube for [topic]"* | Opens YouTube with video search results |
+| *"Search Wikipedia for [topic]"* | Queries Wikipedia knowledge base & opens article |
+| *"Open WhatsApp and message to [name] [text]"* | Opens WhatsApp Web and copies message to clipboard |
 | *"Open Calculator"* | Deploys Windows Calculator unit |
 | *"Open Chrome"* / *"Open browser"* | Launches Google Chrome |
 | *"Open YouTube"* / *"Open GitHub"* | Navigates host browser to the destination |
@@ -134,5 +139,25 @@ You can speak or type any of the following to command your PC:
 | *"Lock computer"* / *"Lock screen"* | Locks Windows workstation instantly |
 | *"What is my CPU and RAM?"* | Reports real host CPU load and memory usage |
 | *"Run command: [powershell command]"* | Executes command on host and returns output |
+
+---
+
+## 🖥️ Running as Native Desktop Application
+
+J.A.R.V.I.S. can now run as a **dedicated native Windows desktop application** with full window management, Alt+Space hotkey toggle, and direct OS control:
+
+```bash
+# 1. Start the desktop application
+npm run desktop
+
+# OR on Windows, simply double-click:
+jarvis-desktop.bat
+```
+
+### 💾 MongoDB Dialogue History
+- All conversations are automatically saved in local MongoDB (`mongodb://127.0.0.1:27017/jarvis_hud`).
+- Fallback to resilient disk cache (`data/history.json`) if MongoDB service is stopped.
+- Click **EXPORT CHAT** in the HUD header to download the complete transcript as Markdown or JSON anytime.
+
 
 
