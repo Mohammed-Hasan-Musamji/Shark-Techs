@@ -10,7 +10,7 @@ class JarvisAIAgent {
         this.userName = localStorage.getItem('jarvis_username') || 'Sir';
         this.apiKey = localStorage.getItem('jarvis_api_key') || '';
         this.provider = localStorage.getItem('jarvis_provider') || 'groq';
-        this.model = localStorage.getItem('jarvis_model') || 'llama-3.3-70b-versatile';
+        this.model = localStorage.getItem('jarvis_model') || 'openai/gpt-oss-120b';
         this.customModel = localStorage.getItem('jarvis_custom_model') || '';
 
         // Multi-Turn Conversation Memory Buffer (last 12 turns)
@@ -97,7 +97,7 @@ class JarvisAIAgent {
     setAiConfig(apiKey, provider, model, customModel) {
         this.apiKey = (apiKey || '').trim();
         this.provider = provider || 'groq';
-        this.model = model || (this.provider === 'groq' ? 'llama-3.3-70b-versatile' : 'gpt-4o-mini');
+        this.model = model || (this.provider === 'groq' ? 'openai/gpt-oss-120b' : 'gpt-4o-mini');
         this.customModel = (customModel || '').trim();
 
         localStorage.setItem('jarvis_api_key', this.apiKey);
@@ -111,7 +111,7 @@ class JarvisAIAgent {
     getActiveModel() {
         if (this.customModel) return this.customModel;
         if (this.provider === 'groq') {
-            return this.model || 'llama-3.3-70b-versatile';
+            return this.model || 'openai/gpt-oss-120b';
         } else if (this.provider === 'openai') {
             return this.model || 'gpt-4o-mini';
         } else if (this.provider === 'gemini') {
@@ -136,7 +136,8 @@ class JarvisAIAgent {
 
         if (this.provider === 'groq') {
             pill.classList.add('active-groq');
-            const modelName = this.getActiveModel().replace('llama-', 'L-').replace('-versatile', '').toUpperCase();
+            const rawModel = this.getActiveModel();
+            const modelName = rawModel.replace('openai/', '').replace('llama-', 'L-').replace('-versatile', '').toUpperCase();
             label.textContent = `GROQ: ${modelName}`;
             pill.title = `Active Core: Groq LPU (${this.getActiveModel()})`;
         } else if (this.provider === 'openai') {
