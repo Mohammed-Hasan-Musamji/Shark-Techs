@@ -125,6 +125,13 @@ class SettingsController {
                 this.config.setScanlines(form.scanlines);
                 this.config.setVoicePreferences(form.voiceRate, form.voicePitch, form.voiceIndex);
 
+                if (form.speechLang) {
+                    localStorage.setItem('jarvis_speech_lang', form.speechLang);
+                    if (window.jarvisSpeech) {
+                        window.jarvisSpeech.setLanguage(form.speechLang);
+                    }
+                }
+
                 this.modal.close();
                 this.audio.playProcessComplete();
                 this.telemetry.appendLog(`[CONFIG] Neural parameters updated: ${form.provider.toUpperCase()} (${this.config.getActiveModel()}).`);

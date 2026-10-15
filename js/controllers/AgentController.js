@@ -69,6 +69,16 @@ class AgentController {
             });
         }
 
+        // Toggle speech recognition language (EN / 中文)
+        const btnLangToggle = document.getElementById('btnLangToggle');
+        if (btnLangToggle) {
+            btnLangToggle.addEventListener('click', () => {
+                const newLang = this.speech.toggleLanguage();
+                this.audio.playClick();
+                this.telemetry.appendLog(`[SYSTEM] Voice recognition language switched to: ${newLang}`);
+            });
+        }
+
         // Hook into SpeechView state changes
         this.speech.onListeningChange = (isListening) => {
             if (isListening) {

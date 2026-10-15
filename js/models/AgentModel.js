@@ -87,91 +87,123 @@ Speak naturally and confirm the action is executing.`;
             }
         }
 
-        // 2. Modes & Protocols
-        if (q.includes('mode') || q.includes('protocol') || q.includes('activate') || q.includes('engage')) {
-            if (q.includes('focus')) {
+        // 2. Modes & Protocols (English & Chinese)
+        if (q.includes('mode') || q.includes('protocol') || q.includes('activate') || q.includes('engage') || q.includes('模式') || q.includes('协议')) {
+            if (q.includes('focus') || q.includes('专注')) {
                 return { action: 'protocol', protocol: 'focus', message: `Focus Mode engaged, ${this.config.userName}. All distraction telemetry suppressed.` };
-            } else if (q.includes('night') || q.includes('stealth') || q.includes('dark')) {
+            } else if (q.includes('night') || q.includes('stealth') || q.includes('dark') || q.includes('夜间') || q.includes('隐身')) {
                 return { action: 'protocol', protocol: 'stealth', message: `Night Mode active, ${this.config.userName}. Luminescence adjusted for low light.` };
-            } else if (q.includes('voice') || q.includes('listen')) {
+            } else if (q.includes('voice') || q.includes('listen') || q.includes('语音')) {
                 return { action: 'protocol', protocol: 'voice-loop', message: `Voice loop mode engaged, ${this.config.userName}. Acoustic sensors listening continuously.` };
-            } else if (q.includes('diagnostic')) {
+            } else if (q.includes('diagnostic') || q.includes('诊断')) {
                 return { action: 'protocol', protocol: 'diagnostic', message: `Running comprehensive diagnostic scan on your host workstation.` };
-            } else if (q.includes('red alert') || q.includes('emergency')) {
+            } else if (q.includes('red alert') || q.includes('emergency') || q.includes('红色警报')) {
                 return { action: 'protocol', protocol: 'red-alert', message: `RED ALERT ENGAGED. Shields at maximum output, offensive repulsors online.` };
             } else if (q.includes('house party')) {
                 return { action: 'protocol', protocol: 'house-party', message: `House Party Protocol activated. Perimeter defense units online.` };
             }
         }
 
-        // 3. System App Launching on Computer (Works from Phone or PC)
-        if (q.startsWith('open ') || q.startsWith('launch ') || q.startsWith('start ')) {
-            const target = q.replace(/^(open|launch|start)\s+/i, '').trim();
+        // 3. Flexible System App & URL Launching on Computer (Works anywhere in sentence & Chinese)
+        const hasOpenIntent = /(?:^|\s)(?:open|launch|start|run|goto|navigate|打开|启动|运行|访问)(?:\s|$)/i.test(q)
+            || q.includes('打开') || q.includes('启动');
 
-            if (target === 'spotify' || target.includes('spotify')) {
+        if (hasOpenIntent || q.includes('whatsapp') || q.includes('spotify') || q.includes('youtube') || q.includes('github')) {
+            // A. WhatsApp Web & Messaging
+            if (q.includes('whatsapp') || q.includes('微信')) {
+                return {
+                    action: 'bridge_url',
+                    url: 'https://web.whatsapp.com',
+                    message: `Opening WhatsApp Web directly on your host computer, ${this.config.userName}. You can now select the contact and send your message.`
+                };
+            }
+
+            // B. Spotify / Music
+            if (q.includes('spotify') || (hasOpenIntent && (q.includes('music') || q.includes('音乐')))) {
                 return { action: 'bridge_app', app: 'spotify', message: `Initiating Spotify audio protocols on your host console, ${this.config.userName}.` };
             }
-            if (target === 'notepad' || target === 'notes' || target.includes('notepad')) {
+
+            // C. Notepad / Notes
+            if (q.includes('notepad') || (hasOpenIntent && (q.includes('notes') || q.includes('记事本') || q.includes('便签')))) {
                 return { action: 'bridge_app', app: 'notepad', message: `Launching Notepad editor on your primary display, ${this.config.userName}.` };
             }
-            if (target === 'calc' || target === 'calculator' || target.includes('calculator')) {
+
+            // D. Calculator
+            if (q.includes('calc') || q.includes('calculator') || (hasOpenIntent && q.includes('计算器'))) {
                 return { action: 'bridge_app', app: 'calc', message: `Calculator auxiliary unit deployed, ${this.config.userName}.` };
             }
-            if (target === 'code' || target === 'vs code' || target === 'vscode' || target.includes('visual studio code')) {
+
+            // E. VS Code / Code Editor
+            if (q.includes('vscode') || q.includes('vs code') || (hasOpenIntent && (q.includes('code') || q.includes('代码')))) {
                 return { action: 'bridge_app', app: 'code', message: `VS Code development matrix initiated, ${this.config.userName}.` };
             }
-            if (target === 'chrome' || target.includes('google chrome') || target === 'browser') {
+
+            // F. Google Chrome / Web Browser
+            if (q.includes('chrome') || (hasOpenIntent && (q.includes('browser') || q.includes('浏览器') || q.includes('网页')))) {
                 return { action: 'bridge_app', app: 'chrome', message: `Launching Google Chrome browser uplink, ${this.config.userName}.` };
             }
-            if (target === 'task manager' || target === 'taskmgr') {
+
+            // G. Windows Task Manager
+            if (q.includes('task manager') || q.includes('taskmgr') || (hasOpenIntent && q.includes('任务管理器'))) {
                 return { action: 'bridge_app', app: 'taskmgr', message: `Windows Task Manager telemetry summoned to screen, ${this.config.userName}.` };
             }
-            if (target === 'files' || target === 'explorer' || target.includes('file explorer')) {
+
+            // H. File Explorer
+            if (q.includes('file explorer') || (hasOpenIntent && (q.includes('files') || q.includes('explorer') || q.includes('文件管理器') || q.includes('文件夹')))) {
                 return { action: 'bridge_app', app: 'explorer', message: `Opening Windows File Explorer directory, ${this.config.userName}.` };
             }
-            if (target.includes('youtube')) {
+
+            // I. YouTube
+            if (q.includes('youtube')) {
                 return { action: 'bridge_url', url: 'https://youtube.com', message: `Connecting host browser directly to YouTube, ${this.config.userName}.` };
             }
-            if (target.includes('github')) {
+
+            // J. GitHub
+            if (q.includes('github')) {
                 return { action: 'bridge_url', url: 'https://github.com', message: `Opening GitHub repositories on your host console, ${this.config.userName}.` };
+            }
+
+            // K. Google Search
+            if (hasOpenIntent && (q.includes('google') || q.includes('谷歌'))) {
+                return { action: 'bridge_url', url: 'https://google.com', message: `Opening Google on your host browser, ${this.config.userName}.` };
             }
         }
 
-        // 4. Screenshot Capture on Computer
-        if (q.includes('screenshot') || q.includes('capture screen') || q.includes('take a screenshot') || q.includes('capture display')) {
+        // 4. Screenshot Capture on Computer (English & Chinese)
+        if (q.includes('screenshot') || q.includes('capture screen') || q.includes('take a screenshot') || q.includes('capture display') || q.includes('截屏') || q.includes('截图')) {
             return { action: 'bridge_screenshot', message: `Capturing desktop display buffer now, ${this.config.userName}. Transmitting image feed to your screen.` };
         }
 
-        // 5. Volume Control on Computer
-        if (q.includes('volume') || q.includes('mute') || q.includes('unmute')) {
-            if (q.includes('mute') && !q.includes('unmute')) {
+        // 5. Volume Control on Computer (English & Chinese)
+        if (q.includes('volume') || q.includes('mute') || q.includes('unmute') || q.includes('音量') || q.includes('静音')) {
+            if ((q.includes('mute') && !q.includes('unmute')) || q.includes('静音')) {
                 return { action: 'bridge_volume', volumeAction: 'mute', message: `Host computer audio output muted, ${this.config.userName}.` };
-            } else if (q.includes('unmute')) {
+            } else if (q.includes('unmute') || q.includes('取消静音')) {
                 return { action: 'bridge_volume', volumeAction: 'unmute', message: `Host computer audio unmuted, ${this.config.userName}.` };
-            } else if (q.includes('down') || q.includes('lower') || q.includes('decrease') || q.includes('softer')) {
+            } else if (q.includes('down') || q.includes('lower') || q.includes('decrease') || q.includes('softer') || q.includes('调小') || q.includes('减小') || q.includes('降低')) {
                 return { action: 'bridge_volume', volumeAction: 'down', message: `Lowering host system volume, ${this.config.userName}.` };
-            } else if (q.includes('up') || q.includes('raise') || q.includes('increase') || q.includes('louder')) {
+            } else if (q.includes('up') || q.includes('raise') || q.includes('increase') || q.includes('louder') || q.includes('调大') || q.includes('加大') || q.includes('提高')) {
                 return { action: 'bridge_volume', volumeAction: 'up', message: `Raising host system volume, ${this.config.userName}.` };
-            } else if (q.includes('max') || q.includes('100%')) {
+            } else if (q.includes('max') || q.includes('100%') || q.includes('最大')) {
                 return { action: 'bridge_volume', volumeAction: 'max', message: `Acoustic repulsors set to maximum volume, ${this.config.userName}.` };
             }
         }
 
-        // 6. Lock Computer / Security
-        if (q.includes('lock computer') || q.includes('lock pc') || q.includes('lock workstation') || q.includes('lock screen')) {
+        // 6. Lock Computer / Security (English & Chinese)
+        if (q.includes('lock computer') || q.includes('lock pc') || q.includes('lock workstation') || q.includes('lock screen') || q.includes('锁屏') || q.includes('锁定电脑')) {
             return { action: 'bridge_lock', message: `Locking host workstation immediately. Perimeter security engaged, ${this.config.userName}.` };
         }
 
         // 7. Run Terminal / PowerShell Command on Computer
-        if (q.startsWith('run command ') || q.startsWith('execute ') || q.startsWith('cmd ') || q.startsWith('powershell ')) {
-            const cmd = input.replace(/^(run command|execute|cmd|powershell)\s+/i, '').trim();
+        if (q.startsWith('run command ') || q.startsWith('execute ') || q.startsWith('cmd ') || q.startsWith('powershell ') || q.startsWith('运行命令 ') || q.startsWith('执行命令 ')) {
+            const cmd = input.replace(/^(run command|execute|cmd|powershell|运行命令|执行命令)\s+/i, '').trim();
             if (cmd) {
                 return { action: 'bridge_exec', command: cmd, message: `Executing command: "${cmd}" on host console...` };
             }
         }
 
-        // 8. Real Hardware Stats Query
-        if (q.includes('cpu') || q.includes('ram') || q.includes('hardware stats') || q.includes('pc stats') || q.includes('system status')) {
+        // 8. Real Hardware Stats Query (English & Chinese)
+        if (q.includes('cpu') || q.includes('ram') || q.includes('hardware stats') || q.includes('pc stats') || q.includes('system status') || q.includes('系统状态') || q.includes('硬件状态')) {
             if (this.systemBridge && this.systemBridge.systemStats) {
                 const s = this.systemBridge.systemStats;
                 return {
@@ -181,20 +213,20 @@ Speak naturally and confirm the action is executing.`;
             }
         }
 
-        // 9. Weather Query
-        if (q.includes('weather') || q.includes('temperature') || q.includes('forecast') || q.includes('climate')) {
+        // 9. Weather Query (English & Chinese)
+        if (q.includes('weather') || q.includes('temperature') || q.includes('forecast') || q.includes('climate') || q.includes('天气') || q.includes('气温')) {
             return { action: 'weather', message: null };
         }
 
-        // 10. Mission Directive Commands
-        if (q.startsWith('add task:') || q.startsWith('add directive:') || q.startsWith('new task:')) {
-            const taskText = input.replace(/^(add task:|add directive:|new task:)/i, '').trim();
+        // 10. Mission Directive Commands (English & Chinese)
+        if (q.startsWith('add task:') || q.startsWith('add directive:') || q.startsWith('new task:') || q.startsWith('添加任务:') || q.startsWith('增加任务:')) {
+            const taskText = input.replace(/^(add task:|add directive:|new task:|添加任务:|增加任务:)\s*/i, '').trim();
             if (taskText) {
                 return { action: 'add_task', text: taskText, message: `I have cataloged "${taskText}" into your active mission directives, ${this.config.userName}.` };
             }
         }
 
-        if (q === 'show tasks' || q === 'show directives' || q === 'list tasks' || q === 'list directives') {
+        if (q === 'show tasks' || q === 'show directives' || q === 'list tasks' || q === 'list directives' || q === '查看任务' || q === '显示任务') {
             const pending = this.directives.getPendingTasks();
             if (pending.length === 0) {
                 return { action: 'response', message: `You have zero pending directives on your docket, ${this.config.userName}. All objectives accomplished.` };
@@ -203,13 +235,13 @@ Speak naturally and confirm the action is executing.`;
             return { action: 'response', message: `You have ${pending.length} pending directives: ${summary}.` };
         }
 
-        if (q === 'clear tasks' || q === 'clear directives' || q === 'delete all tasks') {
+        if (q === 'clear tasks' || q === 'clear directives' || q === 'delete all tasks' || q === '清空任务') {
             return { action: 'clear_tasks', message: `All active mission directives have been archived and cleared, ${this.config.userName}.` };
         }
 
-        // 11. Tactical Notes Command
-        if (q.startsWith('save note:') || q.startsWith('note:') || q.startsWith('record note:')) {
-            const noteText = input.replace(/^(save note:|note:|record note:)/i, '').trim();
+        // 11. Tactical Notes Command (English & Chinese)
+        if (q.startsWith('save note:') || q.startsWith('note:') || q.startsWith('record note:') || q.startsWith('保存笔记:') || q.startsWith('记录笔记:')) {
+            const noteText = input.replace(/^(save note:|note:|record note:|保存笔记:|记录笔记:)\s*/i, '').trim();
             if (noteText) {
                 return { action: 'save_note', text: noteText, message: `Classified note recorded to tactical scratchpad: "${noteText}".` };
             }
@@ -269,7 +301,7 @@ Speak naturally and confirm the action is executing.`;
                 model: activeModel,
                 messages: messagesPayload,
                 temperature: 0.7,
-                max_tokens: 450
+                max_tokens: 1024
             };
 
             const response = await fetch(url, {
@@ -287,14 +319,15 @@ Speak naturally and confirm the action is executing.`;
             }
 
             const data = await response.json();
-            rawResponse = data.choices?.[0]?.message?.content || 'No transmission returned from Groq LPU core.';
+            const msg = data.choices?.[0]?.message;
+            rawResponse = msg?.content || msg?.refusal || (msg?.reasoning ? `[Analysis]: ${msg.reasoning}` : '') || 'No transmission returned from Groq LPU core.';
         } else if (provider === 'openai') {
             const url = 'https://api.openai.com/v1/chat/completions';
             const body = {
                 model: activeModel,
                 messages: messagesPayload,
                 temperature: 0.7,
-                max_tokens: 450
+                max_tokens: 1024
             };
 
             const response = await fetch(url, {
@@ -312,7 +345,8 @@ Speak naturally and confirm the action is executing.`;
             }
 
             const data = await response.json();
-            rawResponse = data.choices?.[0]?.message?.content || 'No response returned from OpenAI core.';
+            const msg = data.choices?.[0]?.message;
+            rawResponse = msg?.content || msg?.refusal || 'No response returned from OpenAI core.';
         } else {
             rawResponse = this.queryOfflineEngine(prompt);
         }
@@ -331,7 +365,37 @@ Speak naturally and confirm the action is executing.`;
         const actionRegex = /\[ACTION:\s*([A-Z_]+)(?:\s+(.*?))?\]/i;
         const match = response.match(actionRegex);
 
-        if (!match) return response;
+        if (!match) {
+            // Conversational fallback: If the LLM declared it is opening/launching something but omitted the tag
+            const lower = response.toLowerCase();
+            try {
+                if (lower.includes('opening whatsapp') || lower.includes('launching whatsapp') || lower.includes('open whatsapp')) {
+                    await this.systemBridge.openUrl('https://web.whatsapp.com');
+                    this.telemetry.appendLog(`[ACTION] Conversational trigger caught: Opening WhatsApp Web`);
+                } else if (lower.includes('opening spotify') || lower.includes('launching spotify')) {
+                    await this.systemBridge.openApp('spotify');
+                    this.telemetry.appendLog(`[ACTION] Conversational trigger caught: Spotify`);
+                } else if (lower.includes('opening notepad') || lower.includes('launching notepad')) {
+                    await this.systemBridge.openApp('notepad');
+                    this.telemetry.appendLog(`[ACTION] Conversational trigger caught: Notepad`);
+                } else if (lower.includes('opening calculator') || lower.includes('launching calculator')) {
+                    await this.systemBridge.openApp('calc');
+                    this.telemetry.appendLog(`[ACTION] Conversational trigger caught: Calculator`);
+                } else if (lower.includes('opening chrome') || lower.includes('launching chrome')) {
+                    await this.systemBridge.openApp('chrome');
+                    this.telemetry.appendLog(`[ACTION] Conversational trigger caught: Chrome`);
+                } else if (lower.includes('opening youtube') || lower.includes('launching youtube')) {
+                    await this.systemBridge.openUrl('https://youtube.com');
+                    this.telemetry.appendLog(`[ACTION] Conversational trigger caught: YouTube`);
+                } else if (lower.includes('opening github') || lower.includes('launching github')) {
+                    await this.systemBridge.openUrl('https://github.com');
+                    this.telemetry.appendLog(`[ACTION] Conversational trigger caught: GitHub`);
+                }
+            } catch (fallbackErr) {
+                console.warn('Fallback conversational trigger error:', fallbackErr);
+            }
+            return response;
+        }
 
         const actionType = match[1].toUpperCase();
         const actionParam = (match[2] || '').trim();

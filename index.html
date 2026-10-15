@@ -230,6 +230,10 @@
                         <span class="mic-pulse-ring"></span>
                     </button>
 
+                    <button id="btnLangToggle" class="hud-btn-icon lang-btn" title="Toggle Voice Recognition Language (EN / 中文)" aria-label="Toggle Language">
+                        <span id="langDisplay">EN</span>
+                    </button>
+
                     <input type="text" id="commandInput" class="hud-input" placeholder="Initiate command or speak to J.A.R.V.I.S..." autocomplete="off">
 
                     <button id="btnSubmitCommand" class="hud-send-btn" title="Execute Command" aria-label="Send Command">
@@ -354,6 +358,15 @@
                     <label class="setting-label" for="userNameInput">User Name</label>
                     <input type="text" id="userNameInput" class="setting-input" value="Harsh" placeholder="e.g. Harsh">
                     <small class="setting-hint">Jarvis will address you by this name.</small>
+                </div>
+
+                <div class="setting-group">
+                    <label class="setting-label" for="speechLangSelect">Voice Recognition Language</label>
+                    <select id="speechLangSelect" class="setting-select">
+                        <option value="en-US">English (United States / UK)</option>
+                        <option value="zh-CN">Chinese (Mandarin / 普通话)</option>
+                    </select>
+                    <small class="setting-hint">Language used by microphone for speech recognition.</small>
                 </div>
 
                 <div class="setting-group">

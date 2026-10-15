@@ -21,6 +21,7 @@ class SettingsModalView {
         this.voicePitch = document.getElementById('voicePitch');
         this.pitchVal = document.getElementById('pitchVal');
         this.voiceSelect = document.getElementById('voiceSelect');
+        this.speechLangSelect = document.getElementById('speechLangSelect');
         this.chkScanlines = document.getElementById('chkScanlines');
         this.keyPrefixHint = document.getElementById('keyPrefixHint');
         this.providerHint = document.getElementById('providerHint');
@@ -91,6 +92,10 @@ class SettingsModalView {
             this.pitchVal.textContent = this.config.voicePitch;
         }
 
+        if (this.speechLangSelect) {
+            this.speechLangSelect.value = localStorage.getItem('jarvis_speech_lang') || 'en-US';
+        }
+
         this.updateModelOptions(this.config.model);
     }
 
@@ -145,7 +150,8 @@ class SettingsModalView {
             scanlines: this.chkScanlines ? this.chkScanlines.checked : true,
             voiceRate: this.voiceRate ? parseFloat(this.voiceRate.value) : 1.0,
             voicePitch: this.voicePitch ? parseFloat(this.voicePitch.value) : 1.0,
-            voiceIndex: this.voiceSelect ? this.voiceSelect.selectedIndex : 0
+            voiceIndex: this.voiceSelect ? this.voiceSelect.selectedIndex : 0,
+            speechLang: this.speechLangSelect ? this.speechLangSelect.value : 'en-US'
         };
     }
 }

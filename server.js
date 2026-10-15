@@ -229,11 +229,20 @@ async function handleApiRequest(req, res, pathname) {
             'powershell': 'powershell.exe',
             'terminal': 'wt.exe',
             'settings': 'start ms-settings:',
-            'paint': 'mspaint.exe'
+            'paint': 'mspaint.exe',
+            'whatsapp': 'https://web.whatsapp.com',
+            'whatsapp web': 'https://web.whatsapp.com',
+            'web whatsapp': 'https://web.whatsapp.com',
+            'youtube': 'https://youtube.com',
+            'github': 'https://github.com',
+            'google': 'https://google.com',
+            'gmail': 'https://mail.google.com'
         };
 
         const target = appMap[app] || app;
-        const script = `Start-Process "${target}"`;
+        const script = target.startsWith('http://') || target.startsWith('https://')
+            ? `Start-Process "${target}"`
+            : `Start-Process "${target}"`;
         const result = await runPowerShell(script);
 
         res.writeHead(200);

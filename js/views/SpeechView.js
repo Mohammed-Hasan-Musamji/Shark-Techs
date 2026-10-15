@@ -13,6 +13,7 @@ class SpeechView {
         this.isListening = false;
         this.availableVoices = [];
         this.selectedVoice = null;
+        this.speechLang = localStorage.getItem('jarvis_speech_lang') || 'en-US';
 
         // Callback hooks for Controller
         this.onSpeechResult = null; // (finalTranscript) => {}
@@ -20,6 +21,7 @@ class SpeechView {
 
         this.initRecognition();
         this.initVoices();
+        this.updateLangDisplay();
 
         // Subscribe to config changes for rate, pitch & voice index
         this.config.subscribe((key) => {
@@ -27,6 +29,30 @@ class SpeechView {
                 this.applyConfigPreferences();
             }
         });
+    }
+
+    setLanguage(lang) {
+        this.speechLang = lang;
+        localStorage.setItem('jarvis_speech_lang', lang);
+        if (this.recognition) {
+            this.recognition.lang = lang;
+        }
+        this.updateLangDisplay();
+        const langName = lang.startsWith('zh') ? 'Chinese (中文)' : 'English';
+        this.setFeedback(`Vocal matrix language set to ${langName}.`);
+    }
+
+    toggleLanguage() {
+        const next = this.speechLang.startsWith('zh') ? 'en-US' : 'zh-CN';
+        this.setLanguage(next);
+        return next;
+    }
+
+    updateLangDisplay() {
+        const langDisplay = document.getElementById('langDisplay');
+        if (langDisplay) {
+            langDisplay.textContent = this.speechLang.startsWith('zh') ? '中' : 'EN';
+        }
     }
 
     initRecognition() {
@@ -41,7 +67,7 @@ class SpeechView {
             this.recognition = new SpeechRec();
             this.recognition.continuous = false;
             this.recognition.interimResults = true;
-            this.recognition.lang = 'en-US';
+            this.recognition.lang = this.speechLang;
 
             this.recognition.onstart = () => {
                 this.isListening = true;
@@ -202,9 +228,26 @@ class SpeechView {
         const cleanText = text.replace(/[*_#`~[\]]/g, '').trim();
         const utterance = new SpeechSynthesisUtterance(cleanText);
 
-        if (this.selectedVoice) {
+        const hasChinese = /[\u4e00-\u9fa5]/.test(cleanText);
+        if (hasChinese) {
+            // Find a Chinese voice if available
+            const zhVoice = this.availableVoices.find(v => 
+                (v.lang && v.lang.toLowerCase().includes('zh')) || 
+                v.name.includes('Chinese') || 
+                v.name.includes('Xiaoxiao') || 
+                v.name.includes('Huihui') || 
+                v.name.includes('Yaoyao') || 
+                v.name.includes('Kangkang')
+            );
+            if (zhVoice) {
+                utterance.voice = zhVoice;
+            }
+            utterance.lang = 'zh-CN';
+        } else if (this.selectedVoice) {
             utterance.voice = this.selectedVoice;
+            utterance.lang = this.selectedVoice.lang || 'en-GB';
         }
+
         utterance.rate = this.config.voiceRate || 1.0;
         utterance.pitch = this.config.voicePitch || 1.0;
 
