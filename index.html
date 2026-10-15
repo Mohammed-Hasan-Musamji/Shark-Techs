@@ -42,6 +42,10 @@
             </div>
 
             <div class="header-right">
+                <button id="btnAiCoreStatus" class="hud-ai-pill" title="Configure AI Intelligence Core (Groq / OpenAI)" aria-label="AI Core">
+                    <span class="ai-pill-icon">⚡</span>
+                    <span id="aiCoreLabel" class="ai-pill-text">AI: GROQ / OPENAI</span>
+                </button>
                 <div class="hud-clock">
                     <span id="hudTime" class="time-display">00:00:00</span>
                     <span id="hudDate" class="date-display">OCT 15, 2026</span>
@@ -366,18 +370,35 @@
                 </div>
 
                 <div class="setting-group">
-                    <label class="setting-label" for="apiKeyInput">Optional Frontier LLM API Key (Gemini / OpenAI)</label>
-                    <input type="password" id="apiKeyInput" class="setting-input" placeholder="Enter API Key to unlock unlimited deep reasoning...">
-                    <small class="setting-hint">Stored strictly in local browser storage. If left empty, Jarvis uses his comprehensive built-in offline NLP knowledge engine!</small>
+                    <label class="setting-label" for="apiProviderSelect">AI Intelligence Provider</label>
+                    <select id="apiProviderSelect" class="setting-select">
+                        <option value="groq">Groq Cloud (Ultra-Fast LPU Inference — OpenAI Compatible API)</option>
+                        <option value="openai">OpenAI Official Core (GPT-4o / GPT-4o-Mini)</option>
+                        <option value="gemini">Google Gemini 1.5 Flash Core</option>
+                        <option value="builtin">Built-in Stark Autonomous Engine (Instant Offline)</option>
+                    </select>
+                    <small class="setting-hint" id="providerHint">Recommended: Groq for sub-second vocal response speed, or OpenAI for official GPT-4o models.</small>
                 </div>
 
                 <div class="setting-group">
-                    <label class="setting-label" for="apiProviderSelect">AI Intelligence Provider</label>
-                    <select id="apiProviderSelect" class="setting-select">
-                        <option value="builtin">Built-in Stark Autonomous Engine (Instant Offline)</option>
-                        <option value="gemini">Google Gemini 1.5 Flash (via API Key)</option>
-                        <option value="openai">OpenAI GPT-4o Mini (via API Key)</option>
+                    <label class="setting-label" for="apiKeyInput" id="apiKeyLabel">API Key (<span id="keyPrefixHint">Groq: gsk_... or OpenAI: sk-...</span>)</label>
+                    <div class="api-key-input-wrapper">
+                        <input type="password" id="apiKeyInput" class="setting-input" placeholder="Paste your Groq or OpenAI API key here...">
+                        <button type="button" id="btnToggleKeyVisibility" class="mini-btn key-toggle-btn" title="Toggle Visibility">SHOW</button>
+                    </div>
+                    <small class="setting-hint">Stored securely and strictly in your local browser storage. Never sent to any 3rd party servers.</small>
+                </div>
+
+                <div class="setting-group" id="modelSelectGroup">
+                    <label class="setting-label" for="apiModelSelect">AI Model for Prompts</label>
+                    <select id="apiModelSelect" class="setting-select">
+                        <!-- Populated dynamically based on chosen provider -->
                     </select>
+                </div>
+
+                <div class="setting-group" id="customModelGroup">
+                    <label class="setting-label" for="customModelInput">Custom Model Identifier (Optional)</label>
+                    <input type="text" id="customModelInput" class="setting-input" placeholder="Leave empty for provider default or specify model">
                 </div>
 
                 <div class="setting-group checkbox-group">

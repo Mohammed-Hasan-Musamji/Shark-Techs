@@ -25,7 +25,11 @@
   - **Tactical Scratchpad**: Encrypted notes stream with automatic timestamping.
   - **Defense Protocols**: Instant triggers for *House Party*, *Stealth Mode*, *Diagnostics*, and *Red Alert*.
   - **Armor Theme Matrix**: Real-time theme switching between Mark IV (Stark Cyan), Mark VII (Gold & Crimson), Stealth Emerald, and Quantum Violet.
-  - **Frontier LLM Integration (Optional)**: Connect an API key for Google Gemini 1.5 Flash or OpenAI GPT-4o-mini in the settings modal for deep open-ended conversational reasoning.
+  - **Groq & OpenAI Frontier LLM Core for Prompts**:
+  - **Groq Cloud Integration**: Ultra-fast LPU inference via OpenAI-compatible endpoints (`https://api.groq.com/openai/v1/chat/completions`) using models like `llama-3.3-70b-versatile`, `llama-3.1-8b-instant`, or `mixtral-8x7b-32768`.
+  - **OpenAI Official Models**: Take prompts with `gpt-4o-mini`, `gpt-4o`, or `gpt-3.5-turbo`.
+  - **Multi-Turn Contextual Memory**: Jarvis remembers prior conversation turns and injects live HUD telemetry (power, tasks, date/time) directly into prompt reasoning.
+  - **Auto-Detection**: Pasting a `gsk_...` key automatically selects Groq, while `sk-...` selects OpenAI.
 
 ---
 

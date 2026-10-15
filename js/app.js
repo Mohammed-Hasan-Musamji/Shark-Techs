@@ -173,7 +173,19 @@ class JarvisAppController {
             });
         });
 
-        // 11. Settings Modal Controls
+        // 11. AI Core Status Button in Header
+        const btnAiCoreStatus = document.getElementById('btnAiCoreStatus');
+        if (btnAiCoreStatus) {
+            btnAiCoreStatus.addEventListener('click', () => {
+                this.openSettings();
+                setTimeout(() => {
+                    const keyInput = document.getElementById('apiKeyInput');
+                    if (keyInput) keyInput.focus();
+                }, 150);
+            });
+        }
+
+        // 12. Settings Modal Controls
         const btnSettings = document.getElementById('btnSettings');
         const btnCloseSettings = document.getElementById('btnCloseSettings');
         const modalBackdrop = document.getElementById('modalBackdrop');
@@ -194,6 +206,39 @@ class JarvisAppController {
         if (modalBackdrop && settingsModal) {
             modalBackdrop.addEventListener('click', () => {
                 this.closeSettings();
+            });
+        }
+
+        // Provider Change Listener
+        const apiProviderSelect = document.getElementById('apiProviderSelect');
+        if (apiProviderSelect) {
+            apiProviderSelect.addEventListener('change', () => {
+                this.updateModelOptions();
+            });
+        }
+
+        // API Key Input Auto-detect (gsk_ for Groq, sk- for OpenAI)
+        const apiKeyInput = document.getElementById('apiKeyInput');
+        if (apiKeyInput) {
+            apiKeyInput.addEventListener('input', () => {
+                const val = apiKeyInput.value.trim();
+                if (val.startsWith('gsk_') && apiProviderSelect.value !== 'groq') {
+                    apiProviderSelect.value = 'groq';
+                    this.updateModelOptions();
+                } else if (val.startsWith('sk-') && !val.startsWith('gsk_') && apiProviderSelect.value !== 'openai') {
+                    apiProviderSelect.value = 'openai';
+                    this.updateModelOptions();
+                }
+            });
+        }
+
+        // Key Visibility Toggle
+        const btnToggleKey = document.getElementById('btnToggleKeyVisibility');
+        if (btnToggleKey && apiKeyInput) {
+            btnToggleKey.addEventListener('click', () => {
+                const isPassword = apiKeyInput.type === 'password';
+                apiKeyInput.type = isPassword ? 'text' : 'password';
+                btnToggleKey.textContent = isPassword ? 'HIDE' : 'SHOW';
             });
         }
 
@@ -526,8 +571,74 @@ class JarvisAppController {
     }
 
     /* ==========================================================================
-       SETTINGS MODAL
+       SETTINGS MODAL & MODEL CONFIGURATION
        ========================================================================== */
+    updateModelOptions(selectedModel) {
+        const provSelect = document.getElementById('apiProviderSelect');
+        const modelSelect = document.getElementById('apiModelSelect');
+        const keyInput = document.getElementById('apiKeyInput');
+        const prefixHint = document.getElementById('keyPrefixHint');
+        const providerHint = document.getElementById('providerHint');
+        if (!provSelect || !modelSelect) return;
+
+        const provider = provSelect.value;
+        modelSelect.innerHTML = '';
+
+        const modelsByProvider = {
+            groq: [
+                { id: 'llama-3.3-70b-versatile', name: 'LLaMA 3.3 70B Versatile (Recommended - High Reasoning)' },
+                { id: 'llama-3.1-8b-instant', name: 'LLaMA 3.1 8B Instant (Ultra-Fast <100ms Speed)' },
+                { id: 'mixtral-8x7b-32768', name: 'Mixtral 8x7B (32k Long Context)' },
+                { id: 'gemma2-9b-it', name: 'Google Gemma 2 9B' }
+            ],
+            openai: [
+                { id: 'gpt-4o-mini', name: 'OpenAI GPT-4o Mini (Recommended - Fast & Smart)' },
+                { id: 'gpt-4o', name: 'OpenAI GPT-4o (Flagship Omni Intelligence)' },
+                { id: 'gpt-3.5-turbo', name: 'OpenAI GPT-3.5 Turbo (Legacy Speed)' }
+            ],
+            gemini: [
+                { id: 'gemini-1.5-flash', name: 'Google Gemini 1.5 Flash' }
+            ],
+            builtin: [
+                { id: 'builtin', name: 'Stark Offline Autonomous Engine' }
+            ]
+        };
+
+        const list = modelsByProvider[provider] || modelsByProvider.groq;
+        list.forEach(m => {
+            const opt = document.createElement('option');
+            opt.value = m.id;
+            opt.textContent = m.name;
+            modelSelect.appendChild(opt);
+        });
+
+        const activeModel = selectedModel || localStorage.getItem('jarvis_model');
+        if (activeModel && Array.from(modelSelect.options).some(o => o.value === activeModel)) {
+            modelSelect.value = activeModel;
+        }
+
+        // Update hints & placeholders
+        if (keyInput && prefixHint && providerHint) {
+            if (provider === 'groq') {
+                keyInput.placeholder = 'Paste your Groq API key (gsk_...)';
+                prefixHint.textContent = 'Groq Key: gsk_...';
+                providerHint.textContent = 'Groq Cloud LPU inference delivers near-instant verbal turnaround for prompts.';
+            } else if (provider === 'openai') {
+                keyInput.placeholder = 'Paste your OpenAI API key (sk-...)';
+                prefixHint.textContent = 'OpenAI Key: sk-...';
+                providerHint.textContent = 'OpenAI Official API powering GPT-4o and GPT-4o-Mini models for prompts.';
+            } else if (provider === 'gemini') {
+                keyInput.placeholder = 'Paste your Gemini API key (AIza...)';
+                prefixHint.textContent = 'Gemini Key: AIza...';
+                providerHint.textContent = 'Google Gemini 1.5 Flash multimode intelligence.';
+            } else {
+                keyInput.placeholder = 'Built-in offline mode active (no API key required)';
+                prefixHint.textContent = 'Offline Heuristics';
+                providerHint.textContent = 'Using localized Stark Industries NLP and autonomous offline skills.';
+            }
+        }
+    }
+
     loadSettings() {
         const savedTheme = localStorage.getItem('jarvis_theme') || 'theme-cyan';
         this.setTheme(savedTheme);
@@ -540,9 +651,20 @@ class JarvisAppController {
         const keyInput = document.getElementById('apiKeyInput');
         if (keyInput) keyInput.value = apiKey;
 
-        const provider = localStorage.getItem('jarvis_provider') || 'builtin';
+        const provider = localStorage.getItem('jarvis_provider') || 'groq';
         const provSelect = document.getElementById('apiProviderSelect');
         if (provSelect) provSelect.value = provider;
+
+        const customModel = localStorage.getItem('jarvis_custom_model') || '';
+        const customModelInput = document.getElementById('customModelInput');
+        if (customModelInput) customModelInput.value = customModel;
+
+        const savedModel = localStorage.getItem('jarvis_model');
+        this.updateModelOptions(savedModel);
+
+        if (window.jarvisAgent) {
+            window.jarvisAgent.updateHeaderPill();
+        }
     }
 
     openSettings() {
@@ -567,13 +689,20 @@ class JarvisAppController {
         const nameInput = document.getElementById('userNameInput');
         const keyInput = document.getElementById('apiKeyInput');
         const provSelect = document.getElementById('apiProviderSelect');
+        const modelSelect = document.getElementById('apiModelSelect');
+        const customModelInput = document.getElementById('customModelInput');
         const voiceRate = document.getElementById('voiceRate');
         const voicePitch = document.getElementById('voicePitch');
         const voiceSelect = document.getElementById('voiceSelect');
 
         if (window.jarvisAgent) {
             window.jarvisAgent.setUserName(nameInput ? nameInput.value : 'Sir');
-            window.jarvisAgent.setApiKey(keyInput ? keyInput.value : '', provSelect ? provSelect.value : 'builtin');
+            window.jarvisAgent.setAiConfig(
+                keyInput ? keyInput.value : '',
+                provSelect ? provSelect.value : 'groq',
+                modelSelect ? modelSelect.value : '',
+                customModelInput ? customModelInput.value : ''
+            );
         }
 
         if (window.jarvisSpeech) {
@@ -586,7 +715,7 @@ class JarvisAppController {
 
         if (window.jarvisSound) window.jarvisSound.playProcessComplete();
         if (window.jarvisAgent) {
-            window.jarvisAgent.appendTelemetryLog('Neural parameters and preferences updated.');
+            window.jarvisAgent.appendTelemetryLog(`AI Core configured: ${(provSelect ? provSelect.value : 'groq').toUpperCase()} (${window.jarvisAgent.getActiveModel()}).`);
         }
     }
 
@@ -594,6 +723,8 @@ class JarvisAppController {
         localStorage.removeItem('jarvis_username');
         localStorage.removeItem('jarvis_api_key');
         localStorage.removeItem('jarvis_provider');
+        localStorage.removeItem('jarvis_model');
+        localStorage.removeItem('jarvis_custom_model');
         localStorage.removeItem('jarvis_theme');
         this.loadSettings();
         if (window.jarvisSound) window.jarvisSound.playClick();
