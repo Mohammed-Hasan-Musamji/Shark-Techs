@@ -373,7 +373,21 @@ Speak naturally and confirm the action is executing.`;
             return { action: 'clear_chat', message: `Transmission feed and neural dialogue cache purged, ${this.config.userName}.` };
         }
 
-        // 13. Math calculations
+        // 13. Autonomous Multi-Step Workflows Across Apps
+        if (q.startsWith('workflow:') || q.startsWith('run workflow') || q.startsWith('execute workflow') || q.startsWith('plan workflow')) {
+            const goal = input.replace(/^(workflow:|run workflow|execute workflow|plan workflow)\s*/i, '').trim();
+            if (goal && window.jarvisWorkflow) {
+                window.jarvisWorkflow.createPlan(goal).then(plan => {
+                    window.jarvisWorkflow.executeWorkflow(plan);
+                });
+                return {
+                    action: 'response',
+                    message: `Autonomous multi-step pipeline initialized for "${goal}". Coordinating cross-app tools, ${this.config.userName}.`
+                };
+            }
+        }
+
+        // 14. Math calculations
         if (q.startsWith('calculate') || q.startsWith('what is') && q.match(/[\d+\-*/^]/)) {
             const expr = q.replace(/^(calculate|what is)/i, '').replace(/[?]/g, '').trim();
             try {

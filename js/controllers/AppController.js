@@ -81,6 +81,8 @@ class AppController {
 
         // 4. Setup Desktop App Launcher & Search Modal Listeners
         this.setupAppsLauncher();
+        this.setupWorkflowPresets();
+        this.setupHistoryArchiveModal();
 
         // 5. Expose clean global namespace for console debugging and compatibility
         window.jarvis = this;
@@ -265,5 +267,120 @@ class AppController {
             this.views.audio.playClick();
             this.models.systemBridge.exportConversationHistory('markdown');
         });
+    }
+
+    setupWorkflowPresets() {
+        document.querySelectorAll('.wf-preset-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const preset = btn.getAttribute('data-preset');
+                if (!window.jarvisWorkflow) return;
+                this.views.audio.playClick();
+
+                let goal = '';
+                if (preset === 'morning') {
+                    goal = 'Plan my day with morning briefing, calendar event and task directives';
+                } else if (preset === 'research') {
+                    goal = 'Research Artificial Intelligence and draft summary email';
+                } else if (preset === 'audit') {
+                    goal = 'Audit system health, inspect hardware telemetry, and export markdown report';
+                }
+
+                if (goal) {
+                    window.jarvisWorkflow.createPlan(goal).then(plan => {
+                        window.jarvisWorkflow.executeWorkflow(plan);
+                    });
+                }
+            });
+        });
+    }
+
+    setupHistoryArchiveModal() {
+        const modal = document.getElementById('historyArchiveModal');
+        const btnOpen = document.getElementById('btnExportChat');
+        const btnClose = document.getElementById('btnCloseHistoryArchive');
+        const listEl = document.getElementById('archiveListContainer');
+        const countEl = document.getElementById('mongoMessageCount');
+        const searchInput = document.getElementById('archiveSearchInput');
+        const btnMd = document.getElementById('btnExportMarkdown');
+        const btnJson = document.getElementById('btnExportJson');
+        const btnClear = document.getElementById('btnClearHistoryConfirm');
+
+        let cachedMessages = [];
+
+        const renderList = (filter = '') => {
+            if (!listEl) return;
+            const q = filter.toLowerCase();
+            const filtered = cachedMessages.filter(m => (m.text || '').toLowerCase().includes(q) || (m.sender || '').toLowerCase().includes(q));
+            if (countEl) countEl.textContent = `${filtered.length} of ${cachedMessages.length} Records`;
+
+            if (filtered.length === 0) {
+                listEl.innerHTML = `<div style="text-align: center; color: var(--text-dim); padding: 20px;">No conversation records found in MongoDB.</div>`;
+                return;
+            }
+
+            listEl.innerHTML = filtered.map(m => `
+                <div class="archive-entry-card">
+                    <div class="archive-entry-header">
+                        <span style="color: ${m.role === 'user' ? '#00f0ff' : '#00ff88'}; font-weight: 700;">${m.sender} [${m.badge}]</span>
+                        <span>${m.timestamp}</span>
+                    </div>
+                    <div class="archive-entry-body">${this.views.conversation.formatContent(m.text)}</div>
+                </div>
+            `).join('');
+        };
+
+        const loadArchive = async () => {
+            const msgs = await this.models.systemBridge.getConversationHistory();
+            cachedMessages = msgs || [];
+            renderList();
+        };
+
+        if (btnOpen && modal) {
+            btnOpen.addEventListener('click', () => {
+                modal.classList.add('active');
+                modal.setAttribute('aria-hidden', 'false');
+                this.views.audio.playModalOpen();
+                loadArchive();
+            });
+        }
+
+        if (btnClose && modal) {
+            btnClose.addEventListener('click', () => {
+                modal.classList.remove('active');
+                modal.setAttribute('aria-hidden', 'true');
+                this.views.audio.playClick();
+            });
+        }
+
+        if (searchInput) {
+            searchInput.addEventListener('input', (e) => {
+                renderList(e.target.value);
+            });
+        }
+
+        if (btnMd) {
+            btnMd.addEventListener('click', () => {
+                this.views.audio.playClick();
+                this.models.systemBridge.exportConversationHistory('markdown');
+            });
+        }
+
+        if (btnJson) {
+            btnJson.addEventListener('click', () => {
+                this.views.audio.playClick();
+                this.models.systemBridge.exportConversationHistory('json');
+            });
+        }
+
+        if (btnClear) {
+            btnClear.addEventListener('click', async () => {
+                if (confirm('Are you sure you want to purge all conversation history from MongoDB?')) {
+                    this.views.audio.playAlert();
+                    await this.models.systemBridge.clearConversationHistory();
+                    this.models.conversation.clear();
+                    await loadArchive();
+                }
+            });
+        }
     }
 }

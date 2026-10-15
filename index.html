@@ -273,6 +273,39 @@
                 </div>
 
                 <div class="panel-content scrollable">
+                    <!-- Autonomous Multi-Step Workflows Across Apps -->
+                    <div class="hud-widget workflow-hud-widget">
+                        <div class="widget-header">
+                            <span class="sub-heading">AUTONOMOUS WORKFLOWS</span>
+                            <span class="wf-status-pill" id="wfHeaderPill">MULTI-APP ENGINE</span>
+                        </div>
+
+                        <!-- Stepper / Execution Pipeline Container -->
+                        <div id="workflowWidget" class="workflow-stepper-box">
+                            <div class="wf-empty-state">
+                                <span class="wf-empty-icon">⚡</span>
+                                <p>No active workflow running.</p>
+                                <small>Pick a preset below or type <em>"Workflow: [goal]"</em></small>
+                            </div>
+                        </div>
+
+                        <!-- Preset Quick-Trigger Multi-Step Workflows -->
+                        <div class="workflow-presets-grid">
+                            <button class="wf-preset-btn" data-preset="morning" title="Weather + Directives + Scratchpad + Calendar .ICS">
+                                <span class="preset-icon">🌅</span>
+                                <span class="preset-label">Day Plan</span>
+                            </button>
+                            <button class="wf-preset-btn" data-preset="research" title="Knowledge Lookup + Notes + Email Draft">
+                                <span class="preset-icon">🔍</span>
+                                <span class="preset-label">Research</span>
+                            </button>
+                            <button class="wf-preset-btn" data-preset="audit" title="Hardware Telemetry + Diagnostics + Markdown Report">
+                                <span class="preset-icon">🛡️</span>
+                                <span class="preset-label">Sys Audit</span>
+                            </button>
+                        </div>
+                    </div>
+
                     <!-- Weather & Environment Widget -->
                     <div class="hud-widget weather-widget">
                         <div class="widget-header">
@@ -587,6 +620,34 @@
                         <button class="bridge-quick-btn" id="btnQuickLock">🔒 Lock PC</button>
                         <button class="bridge-quick-btn" id="btnQuickExportHistory">💾 Export History</button>
                     </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MongoDB Conversation History & Archive Modal -->
+    <div id="historyArchiveModal" class="hud-modal" role="dialog" aria-modal="true" aria-hidden="true">
+        <div class="modal-card history-archive-card">
+            <div class="modal-header">
+                <div class="modal-title-group">
+                    <span class="modal-icon">🗄️</span>
+                    <h2 class="modal-title">MONGODB CONVERSATION ARCHIVE</h2>
+                </div>
+                <button id="btnCloseHistoryArchive" class="modal-close" aria-label="Close Archive">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="archive-status-bar">
+                    <span id="mongoStatusIndicator" class="mongo-status-chip online">🟢 MONGODB: CONNECTED (mongodb://127.0.0.1:27017/jarvis_hud)</span>
+                    <span id="mongoMessageCount" class="archive-count">0 Records Loaded</span>
+                </div>
+                <div class="archive-filter-row">
+                    <input type="text" id="archiveSearchInput" class="hud-input sm" placeholder="Search saved dialogues in MongoDB..." />
+                    <button id="btnExportMarkdown" class="hud-btn primary sm">EXPORT (.MD)</button>
+                    <button id="btnExportJson" class="hud-btn secondary sm">EXPORT (.JSON)</button>
+                    <button id="btnClearHistoryConfirm" class="hud-btn alert sm">PURGE CACHE</button>
+                </div>
+                <div class="archive-list-container scrollable" id="archiveListContainer">
+                    <!-- Populated dynamically from MongoDB -->
                 </div>
             </div>
         </div>

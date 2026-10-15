@@ -1819,4 +1819,283 @@ html, body {
     border-color: rgba(0, 255, 136, 0.4);
 }
 
+/* ==========================================================================
+   WORKFLOW STEPPER PIPELINE STYLES
+   ========================================================================== */
+.workflow-hud-widget {
+    background: rgba(4, 14, 28, 0.65);
+    border: 1px solid var(--primary-border);
+    border-radius: var(--border-radius-md);
+    padding: 12px;
+    margin-bottom: 14px;
+}
+
+.wf-status-pill {
+    font-family: var(--font-display);
+    font-size: 9.5px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    padding: 2px 7px;
+    border-radius: 10px;
+    background: var(--primary-dim);
+    color: var(--primary-glow);
+    border: 1px solid var(--primary-border);
+}
+
+.workflow-stepper-box {
+    margin: 10px 0;
+    max-height: 220px;
+    overflow-y: auto;
+    scrollbar-width: thin;
+}
+
+.wf-empty-state {
+    text-align: center;
+    padding: 16px 8px;
+    color: var(--text-dim);
+}
+
+.wf-empty-icon {
+    font-size: 22px;
+    display: block;
+    margin-bottom: 6px;
+    color: var(--primary-glow);
+    animation: pulseGlow 2s infinite ease-in-out;
+}
+
+.wf-empty-state p {
+    font-size: 12.5px;
+    color: var(--text-secondary);
+    margin-bottom: 4px;
+}
+
+.wf-empty-state small {
+    font-size: 11px;
+    color: var(--text-dim);
+}
+
+.wf-header {
+    margin-bottom: 10px;
+}
+
+.wf-title-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 4px;
+}
+
+.wf-badge-live {
+    font-family: var(--font-display);
+    font-size: 9px;
+    letter-spacing: 1.5px;
+    color: var(--primary-glow);
+}
+
+.wf-percent {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--primary-glow);
+}
+
+.wf-goal-title {
+    font-family: var(--font-ui);
+    font-size: 13.5px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 6px;
+}
+
+.wf-bar {
+    height: 4px;
+}
+
+.wf-steps-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.wf-step-card {
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: var(--border-radius-sm);
+    padding: 8px 10px;
+    transition: all 0.25s ease;
+}
+
+.wf-step-card.status-running {
+    border-color: var(--warning-color);
+    box-shadow: 0 0 10px rgba(255, 183, 3, 0.2);
+}
+
+.wf-step-card.status-completed {
+    border-color: rgba(0, 255, 136, 0.35);
+}
+
+.wf-step-card.status-healed {
+    border-color: #00f0ff;
+    background: rgba(0, 240, 255, 0.05);
+}
+
+.wf-step-card.status-failed {
+    border-color: var(--alert-color);
+    background: rgba(255, 51, 102, 0.08);
+    box-shadow: 0 0 12px rgba(255, 51, 102, 0.25);
+}
+
+.step-card-header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 4px;
+}
+
+.step-num {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--text-dim);
+    letter-spacing: 0.5px;
+}
+
+.step-app-tag {
+    font-family: var(--font-display);
+    font-size: 9.5px;
+    font-weight: 700;
+    letter-spacing: 0.8px;
+    color: var(--primary-glow);
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.step-desc {
+    font-size: 12px;
+    color: var(--text-secondary);
+    line-height: 1.4;
+}
+
+/* WORKFLOW PRESETS GRID */
+.workflow-presets-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+    margin-top: 10px;
+}
+
+.wf-preset-btn {
+    background: rgba(0, 0, 0, 0.35);
+    border: 1px solid var(--primary-border);
+    border-radius: var(--border-radius-sm);
+    padding: 7px 4px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.wf-preset-btn:hover {
+    background: var(--primary-dim);
+    border-color: var(--primary-glow);
+    color: var(--text-primary);
+    transform: translateY(-1px);
+}
+
+.wf-preset-btn .preset-icon {
+    font-size: 14px;
+}
+
+.wf-preset-btn .preset-label {
+    font-family: var(--font-display);
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+}
+
+/* ==========================================================================
+   MONGODB CONVERSATION ARCHIVE MODAL
+   ========================================================================== */
+.history-archive-card {
+    max-width: 820px;
+    width: 92%;
+}
+
+.archive-status-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 12px;
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid var(--border-glow);
+    border-radius: 6px;
+    margin-bottom: 12px;
+}
+
+.mongo-status-chip {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: #00ff88;
+}
+
+.archive-count {
+    font-family: var(--font-display);
+    font-size: 10px;
+    letter-spacing: 1px;
+    color: var(--primary-glow);
+}
+
+.archive-filter-row {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.archive-list-container {
+    max-height: 50vh;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding-right: 4px;
+}
+
+.archive-entry-card {
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 6px;
+    padding: 10px 12px;
+}
+
+.archive-entry-header {
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    color: var(--text-dim);
+    margin-bottom: 4px;
+}
+
+.archive-entry-body {
+    font-size: 12.5px;
+    color: var(--text-primary);
+    line-height: 1.4;
+}
+
+.hud-btn.alert {
+    background: rgba(255, 51, 102, 0.2);
+    border: 1px solid #ff3366;
+    color: #ff859f;
+}
+
+.hud-btn.alert:hover {
+    background: #ff3366;
+    color: #fff;
+}
+
+
 
