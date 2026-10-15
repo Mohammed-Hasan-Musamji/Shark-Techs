@@ -647,9 +647,12 @@ class JarvisAppController {
         const nameInput = document.getElementById('userNameInput');
         if (nameInput) nameInput.value = name;
 
-        const apiKey = localStorage.getItem('jarvis_api_key') || '';
+        let apiKey = localStorage.getItem('jarvis_api_key') || '';
+        const envKey = window.jarvisAgent ? window.jarvisAgent.getApiKey() : (window.__ENV__?.GROQ_API_KEY || window.__ENV__?.OPENAI_API_KEY || '');
         const keyInput = document.getElementById('apiKeyInput');
-        if (keyInput) keyInput.value = apiKey;
+        if (keyInput) {
+            keyInput.value = apiKey || envKey;
+        }
 
         const provider = localStorage.getItem('jarvis_provider') || 'groq';
         const provSelect = document.getElementById('apiProviderSelect');

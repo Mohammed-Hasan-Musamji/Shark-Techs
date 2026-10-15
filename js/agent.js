@@ -17,7 +17,76 @@ class JarvisAIAgent {
         this.conversationHistory = [];
         this.maxHistory = 12;
 
+        // Apply environment variables from window.__ENV__ if present
+        this.applyEnvConfig();
+
+        // Also attempt to fetch .env asynchronously to parse dynamic updates
+        this.loadEnvFile();
+
         this.updateHeaderPill();
+    }
+
+    applyEnvConfig() {
+        const env = window.__ENV__ || {};
+        if (!this.apiKey) {
+            if (this.provider === 'groq' && env.GROQ_API_KEY) {
+                this.apiKey = env.GROQ_API_KEY;
+            } else if (this.provider === 'openai' && env.OPENAI_API_KEY) {
+                this.apiKey = env.OPENAI_API_KEY;
+            } else if (env.GROQ_API_KEY) {
+                this.apiKey = env.GROQ_API_KEY;
+                this.provider = 'groq';
+            } else if (env.OPENAI_API_KEY) {
+                this.apiKey = env.OPENAI_API_KEY;
+                this.provider = 'openai';
+            }
+        }
+        if (env.DEFAULT_PROVIDER && !localStorage.getItem('jarvis_provider')) {
+            this.provider = env.DEFAULT_PROVIDER;
+        }
+        if (env.DEFAULT_MODEL && !localStorage.getItem('jarvis_model')) {
+            this.model = env.DEFAULT_MODEL;
+        }
+        this.updateHeaderPill();
+    }
+
+    async loadEnvFile() {
+        try {
+            const res = await fetch('.env');
+            if (res.ok) {
+                const text = await res.text();
+                const lines = text.split('\n');
+                const parsed = {};
+                for (const line of lines) {
+                    const trimmed = line.trim();
+                    if (!trimmed || trimmed.startsWith('#')) continue;
+                    const eqIdx = trimmed.indexOf('=');
+                    if (eqIdx !== -1) {
+                        const k = trimmed.substring(0, eqIdx).trim();
+                        const v = trimmed.substring(eqIdx + 1).trim();
+                        parsed[k] = v;
+                    }
+                }
+                if (parsed.GROQ_API_KEY || parsed.OPENAI_API_KEY) {
+                    window.__ENV__ = Object.assign(window.__ENV__ || {}, parsed);
+                    this.applyEnvConfig();
+                    this.appendTelemetryLog(`[ENV] Environment parameters loaded from .env file (${this.provider.toUpperCase()} active).`);
+                }
+            }
+        } catch (e) {
+            // Static file or fetch restrictions fallback
+        }
+    }
+
+    getApiKey() {
+        if (this.apiKey) return this.apiKey;
+        const env = window.__ENV__ || {};
+        if (this.provider === 'groq') {
+            return env.GROQ_API_KEY || this.apiKey;
+        } else if (this.provider === 'openai') {
+            return env.OPENAI_API_KEY || this.apiKey;
+        }
+        return env.GROQ_API_KEY || env.OPENAI_API_KEY || '';
     }
 
     setUserName(name) {
@@ -58,7 +127,8 @@ class JarvisAIAgent {
 
         pill.classList.remove('active-groq', 'active-openai');
 
-        if (!this.apiKey && this.provider !== 'builtin') {
+        const activeKey = this.getApiKey();
+        if (!activeKey && this.provider !== 'builtin') {
             label.textContent = 'CONNECT API KEY';
             pill.title = 'Click to connect your Groq or OpenAI API key';
             return;
@@ -139,8 +209,9 @@ You have access to this live telemetry. If the user asks about time, tasks, or s
             return;
         }
 
-        // If an LLM provider is configured with an API key, route all conversational prompts to the model!
-        if (this.apiKey && this.provider !== 'builtin') {
+        // If an LLM provider is configured with an API key (from .env or UI), route prompts to the model!
+        const activeKey = this.getApiKey();
+        if (activeKey && this.provider !== 'builtin') {
             try {
                 this.appendTelemetryLog(`Routing prompt to ${this.provider.toUpperCase()} (${this.getActiveModel()})...`);
                 const llmReply = await this.queryLLM(input);
@@ -251,6 +322,11 @@ You have access to this live telemetry. If the user asks about time, tasks, or s
      */
     async queryLLM(prompt) {
         const activeModel = this.getActiveModel();
+        const activeKey = this.getApiKey();
+
+        if (!activeKey) {
+            throw new Error(`No API key found for ${this.provider.toUpperCase()}. Please add it to your .env file or Settings modal.`);
+        }
 
         // Append user prompt to multi-turn conversation history
         this.conversationHistory.push({ role: 'user', content: prompt });
@@ -278,7 +354,7 @@ You have access to this live telemetry. If the user asks about time, tasks, or s
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${this.apiKey}`
+                    'Authorization': `Bearer ${activeKey}`
                 },
                 body: JSON.stringify(body)
             });
@@ -306,7 +382,7 @@ You have access to this live telemetry. If the user asks about time, tasks, or s
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${this.apiKey}`
+                    'Authorization': `Bearer ${activeKey}`
                 },
                 body: JSON.stringify(body)
             });
@@ -322,7 +398,7 @@ You have access to this live telemetry. If the user asks about time, tasks, or s
 
         // 3. GOOGLE GEMINI
         else if (this.provider === 'gemini') {
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${this.apiKey}`;
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${activeKey}`;
             const body = {
                 contents: [
                     {

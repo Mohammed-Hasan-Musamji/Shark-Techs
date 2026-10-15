@@ -1,0 +1,11 @@
+# Environment & Secret Files (Never commit API keys)
+.env
+.env.local
+.env.*.local
+env.js
+
+# Operating System & Editor Files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
