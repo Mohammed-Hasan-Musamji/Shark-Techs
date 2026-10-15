@@ -23,17 +23,29 @@ class DirectiveModel {
 
     loadTasks() {
         const stored = localStorage.getItem('jarvis_tasks');
+        let needsReset = false;
         if (stored) {
             try {
                 this.tasks = JSON.parse(stored);
+                const hasStarkLore = Array.isArray(this.tasks) && this.tasks.some(t => 
+                    /mark 85|vibranium|arc reactor|orbital defense|iron legion|stark/i.test(t.text || '')
+                );
+                if (hasStarkLore || !Array.isArray(this.tasks) || this.tasks.length === 0) {
+                    needsReset = true;
+                }
             } catch (e) {
-                this.tasks = [];
+                needsReset = true;
             }
         } else {
+            needsReset = true;
+        }
+
+        if (needsReset) {
             this.tasks = [
-                { id: 1, text: 'Review Mark 85 telemetry calibration', completed: false, createdAt: Date.now() - 3600000 },
-                { id: 2, text: 'Calibrate Arc Reactor vibranium core', completed: true, createdAt: Date.now() - 7200000 },
-                { id: 3, text: 'Verify orbital defense satellite handshake', completed: false, createdAt: Date.now() - 10800000 }
+                { id: 1, text: 'Configure Groq API key in .env or Settings modal', completed: true, createdAt: Date.now() - 3600000 },
+                { id: 2, text: 'Verify live weather telemetry for current location', completed: true, createdAt: Date.now() - 7200000 },
+                { id: 3, text: 'Prompt Jarvis with openai/gpt-oss-120b for project tasks', completed: false, createdAt: Date.now() - 10800000 },
+                { id: 4, text: 'Review real-time CPU and network latency diagnostics', completed: false, createdAt: Date.now() - 14400000 }
             ];
             this.persistTasks();
         }

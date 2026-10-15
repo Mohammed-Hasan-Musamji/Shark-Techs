@@ -87,16 +87,20 @@ Speak naturally and confirm the action is executing.`;
             }
         }
 
-        // 2. Defense Protocols
-        if (q.includes('activate protocol') || q.includes('engage protocol') || q.includes('protocol')) {
-            if (q.includes('red alert') || q.includes('emergency')) {
+        // 2. Modes & Protocols
+        if (q.includes('mode') || q.includes('protocol') || q.includes('activate') || q.includes('engage')) {
+            if (q.includes('focus')) {
+                return { action: 'protocol', protocol: 'focus', message: `Focus Mode engaged, ${this.config.userName}. All distraction telemetry suppressed.` };
+            } else if (q.includes('night') || q.includes('stealth') || q.includes('dark')) {
+                return { action: 'protocol', protocol: 'stealth', message: `Night Mode active, ${this.config.userName}. Luminescence adjusted for low light.` };
+            } else if (q.includes('voice') || q.includes('listen')) {
+                return { action: 'protocol', protocol: 'voice-loop', message: `Voice loop mode engaged, ${this.config.userName}. Acoustic sensors listening continuously.` };
+            } else if (q.includes('diagnostic')) {
+                return { action: 'protocol', protocol: 'diagnostic', message: `Running comprehensive diagnostic scan on your host workstation.` };
+            } else if (q.includes('red alert') || q.includes('emergency')) {
                 return { action: 'protocol', protocol: 'red-alert', message: `RED ALERT ENGAGED. Shields at maximum output, offensive repulsors online.` };
             } else if (q.includes('house party')) {
-                return { action: 'protocol', protocol: 'house-party', message: `House Party Protocol activated. All automated armor units deploying to your perimeter.` };
-            } else if (q.includes('stealth')) {
-                return { action: 'protocol', protocol: 'stealth', message: `Stealth protocol engaged. Acoustic dampeners active, thermal emission masked.` };
-            } else if (q.includes('diagnostics') || q.includes('diagnostic')) {
-                return { action: 'protocol', protocol: 'diagnostics', message: `Running comprehensive diagnostic scan across all telemetry subsystems.` };
+                return { action: 'protocol', protocol: 'house-party', message: `House Party Protocol activated. Perimeter defense units online.` };
             }
         }
 

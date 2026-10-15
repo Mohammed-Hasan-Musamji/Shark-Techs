@@ -1,7 +1,7 @@
 /**
  * ============================================================================
  * J.A.R.V.I.S. HUD VIEW (V - MVC)
- * Header Clock, Uptime Counter, AI Core Pill, Status Chip and Armor Themes
+ * Header Clock, Uptime Counter, AI Core Pill, Status Chip, Modes & Armor Themes
  * ============================================================================
  */
 
@@ -19,10 +19,18 @@ class HudView {
         this.statusChip = document.getElementById('hudStatusChip');
         this.statusLabel = document.getElementById('statusLabel');
 
+        // Footer elements
+        this.footerUser = document.getElementById('footerUser');
+        this.footerPlatform = document.getElementById('footerPlatform');
+        this.footerCores = document.getElementById('footerCores');
+        this.agentModeDesc = document.getElementById('agentModeDesc');
+
         // Apply initial config
         this.applyTheme(this.config.theme);
         this.applyScanlines(this.config.scanlines);
         this.updateAiCoreBadge();
+        this.updateUserLabels();
+        this.updateHardwareLabels();
 
         // Subscribe to models
         this.config.subscribe((key) => {
@@ -34,6 +42,9 @@ class HudView {
             }
             if (key === 'ai_config_changed' || key === 'config_loaded' || key === 'reset_defaults') {
                 this.updateAiCoreBadge();
+            }
+            if (key === 'username_changed' || key === 'reset_defaults') {
+                this.updateUserLabels();
             }
         });
 
@@ -48,6 +59,23 @@ class HudView {
                 this.renderProtocol(data);
             }
         });
+    }
+
+    updateUserLabels() {
+        const name = this.config.userName || 'Harsh';
+        if (this.footerUser) this.footerUser.textContent = name.toUpperCase();
+        if (this.agentModeDesc && (!window.jarvisVisualizer || window.jarvisVisualizer.state === 'standby')) {
+            this.agentModeDesc.textContent = `Awaiting your instruction, ${name}.`;
+        }
+    }
+
+    updateHardwareLabels() {
+        if (this.footerPlatform) {
+            this.footerPlatform.textContent = (this.telemetry.hardware.platform || 'WIN32').toUpperCase();
+        }
+        if (this.footerCores) {
+            this.footerCores.textContent = `${this.telemetry.hardware.cores} CORES`;
+        }
     }
 
     renderClock() {
@@ -68,9 +96,9 @@ class HudView {
         this.uptimeEl.textContent = `${hrs}:${mins}:${secs}`;
     }
 
-    renderPing(pingMs) {
+    renderPing(pingText) {
         if (this.pingEl) {
-            this.pingEl.textContent = `${pingMs}ms`;
+            this.pingEl.textContent = typeof pingText === 'number' ? `${pingText}ms` : pingText;
         }
     }
 
@@ -109,7 +137,7 @@ class HudView {
 
         if (provider === 'groq') {
             this.aiCorePill.classList.add('active-groq');
-            const modelName = this.config.getActiveModel().replace('llama-', 'L-').replace('-versatile', '').toUpperCase();
+            const modelName = this.config.getActiveModel().replace('openai/', '').toUpperCase();
             this.aiCoreLabel.textContent = `GROQ: ${modelName}`;
             this.aiCorePill.title = `Active Core: Groq LPU (${this.config.getActiveModel()})`;
         } else if (provider === 'openai') {
@@ -120,7 +148,7 @@ class HudView {
             this.aiCoreLabel.textContent = 'GEMINI: 1.5-FLASH';
             this.aiCorePill.title = 'Active Core: Google Gemini 1.5 Flash';
         } else {
-            this.aiCoreLabel.textContent = 'STARK OFFLINE';
+            this.aiCoreLabel.textContent = 'OFFLINE ENGINE';
             this.aiCorePill.title = 'Operating on local heuristic knowledge engine';
         }
     }
@@ -130,14 +158,18 @@ class HudView {
             b.classList.toggle('active', b.getAttribute('data-protocol') === protocolName);
         });
 
-        if (protocolName === 'red-alert') {
+        if (protocolName === 'focus') {
+            this.flashStatus('FOCUS MODE ENGAGED', '#00f0ff');
+        } else if (protocolName === 'stealth') {
+            this.flashStatus('NIGHT MODE ACTIVE', '#00ff88');
+        } else if (protocolName === 'diagnostic') {
+            this.flashStatus('DIAGNOSTICS RUNNING', '#ffc837');
+        } else if (protocolName === 'voice-loop') {
+            this.flashStatus('VOICE MODE ACTIVE', '#ff3366');
+        } else if (protocolName === 'red-alert') {
             this.flashStatus('RED ALERT ENGAGED', '#ff3366');
         } else if (protocolName === 'house-party') {
             this.flashStatus('HOUSE PARTY PROTOCOL', '#ffc837');
-        } else if (protocolName === 'stealth') {
-            this.flashStatus('STEALTH MODE ENGAGED', '#00ff88');
-        } else if (protocolName === 'diagnostics') {
-            this.flashStatus('DIAGNOSTICS ACTIVE', '#00f0ff');
         }
     }
 

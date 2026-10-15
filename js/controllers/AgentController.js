@@ -142,7 +142,7 @@ class AgentController {
             this.deliverResponse(direct.message);
         } else if (direct.action === 'weather') {
             const w = await this.telemetry.fetchLiveWeather();
-            const reply = `Atmospheric telemetry in ${w.city}: ${w.tempC}°C (${w.tempF}°F), wind speed at ${w.windSpeed}, humidity at ${w.humidity}. All repulsor flight conditions are favorable, ${this.config.userName}.`;
+            const reply = `Real-time weather for ${w.city}: Currently ${w.tempC}°C, feels like ${w.feelsLike || w.tempC}°C with ${(w.condition || 'clear skies').toLowerCase()}. Humidity is ${w.humidity} and wind speed is ${w.windSpeed}, ${this.config.userName}.`;
             this.deliverResponse(reply);
         } else if (direct.action === 'add_task') {
             this.directives.addTask(direct.text);

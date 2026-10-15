@@ -83,19 +83,13 @@ class TelemetryView {
 
     renderWeather(w) {
         if (!w || !w.loaded) return;
-        if (this.weatherLoc) this.weatherLoc.textContent = (w.city || 'Malibu Coast Sector').toUpperCase();
-        if (this.weatherTemp) this.weatherTemp.textContent = `${w.tempC}°C / ${w.tempF}°F`;
-        if (this.weatherWind) this.weatherWind.textContent = w.windSpeed || '14 km/h';
-        if (this.weatherHumidity) this.weatherHumidity.textContent = w.humidity || '45%';
-
+        const iconEl = document.getElementById('weatherIcon');
+        if (iconEl && w.icon) iconEl.textContent = w.icon;
+        if (this.weatherLoc) this.weatherLoc.textContent = (w.city || 'LOCAL STATION').toUpperCase();
+        if (this.weatherTemp) this.weatherTemp.textContent = `${w.tempC}°C`;
         if (this.weatherDesc) {
-            const code = w.weatherCode;
-            let desc = 'Clear Sky / Optimal Flight Conditions';
-            if (code === 1 || code === 2 || code === 3) desc = 'Partly Cloudy / Stable Atmosphere';
-            else if (code >= 45 && code <= 48) desc = 'Foggy / Reduced Sensor Visibility';
-            else if (code >= 51 && code <= 67) desc = 'Rain Showers / Repulsor Heating Active';
-            else if (code >= 71) desc = 'Atmospheric Freezing / Armor De-Icers On';
-            this.weatherDesc.textContent = desc;
+            const feels = w.feelsLike !== null && w.feelsLike !== undefined ? w.feelsLike : w.tempC;
+            this.weatherDesc.textContent = `${w.condition || 'Clear Sky'} | Feels like ${feels}°C | Humidity: ${w.humidity || '45%'} | Wind: ${w.windSpeed || '10 km/h'}`;
         }
     }
 

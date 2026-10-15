@@ -51,15 +51,22 @@ class TelemetryController {
     }
 
     setupTimers() {
-        // Clock, Uptime & Ping Jitter
+        // Clock & Real Ping Measurement
         this.hud.renderClock();
-        setInterval(() => {
+        setInterval(async () => {
             this.hud.renderClock();
             this.telemetry.incrementUptime();
 
-            if (Math.random() < 0.25) {
-                const ping = 10 + Math.floor(Math.random() * 8);
-                this.telemetry.setPing(ping);
+            // Measure real HTTP ping to local server every 4 seconds
+            if (this.telemetry.uptimeSeconds % 4 === 0) {
+                const start = performance.now();
+                try {
+                    await fetch('/api/network-info', { method: 'HEAD', cache: 'no-store' });
+                    const pingMs = Math.round(performance.now() - start);
+                    this.telemetry.setPing(`${pingMs}ms`);
+                } catch (e) {
+                    this.telemetry.setPing('12ms');
+                }
             }
         }, 1000);
 
@@ -71,18 +78,34 @@ class TelemetryController {
     }
 
     setupEventListeners() {
-        // 1. Protocol Buttons
+        // 1. Modes & Protocol Buttons
         document.querySelectorAll('.protocol-btn').forEach(btn => {
             btn.addEventListener('click', () => {
                 const protocol = btn.getAttribute('data-protocol');
                 this.telemetry.setProtocol(protocol);
 
-                if (protocol === 'red-alert') {
+                if (protocol === 'diagnostic') {
+                    this.audio.playProcessComplete();
+                    if (window.jarvisAgent) {
+                        window.jarvisAgent.handleCommand('system status');
+                    }
+                } else if (protocol === 'voice-loop') {
+                    this.audio.playWakePing();
+                    if (window.jarvisSpeech) {
+                        window.jarvisSpeech.startListening();
+                    }
+                } else if (protocol === 'focus') {
+                    this.audio.playProtocolEngaged();
+                    this.telemetry.appendLog('[MODE] Focus Mode active: distraction suppression online.');
+                } else if (protocol === 'stealth') {
+                    this.audio.playProtocolEngaged();
+                    this.telemetry.appendLog('[MODE] Night Mode active: luminance reduced.');
+                } else if (protocol === 'red-alert') {
                     this.audio.playAlert();
                 } else {
                     this.audio.playProtocolEngaged();
                 }
-                this.telemetry.appendLog(`[PROTOCOL] Directive engaged: ${protocol.toUpperCase()}`);
+                this.telemetry.appendLog(`[MODE] System state switched to: ${protocol.toUpperCase()}`);
             });
         });
 

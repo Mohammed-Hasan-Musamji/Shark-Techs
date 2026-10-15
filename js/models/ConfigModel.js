@@ -10,7 +10,7 @@ class ConfigModel {
         this.subscribers = [];
 
         // Core Identity & AI Provider State
-        this.userName = localStorage.getItem('jarvis_username') || 'Sir';
+        this.userName = localStorage.getItem('jarvis_username') || 'Harsh';
         this.apiKey = localStorage.getItem('jarvis_api_key') || '';
         this.provider = localStorage.getItem('jarvis_provider') || 'groq';
         this.model = localStorage.getItem('jarvis_model') || 'openai/gpt-oss-120b';
@@ -172,7 +172,7 @@ class ConfigModel {
         localStorage.removeItem('jarvis_voice_index');
         localStorage.removeItem('jarvis_sound_muted');
 
-        this.userName = 'Sir';
+        this.userName = 'Harsh';
         this.apiKey = '';
         this.provider = 'groq';
         this.model = 'openai/gpt-oss-120b';
